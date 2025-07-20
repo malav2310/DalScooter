@@ -1,28 +1,28 @@
 data "archive_file" "define_auth_lambda" {
   type        = "zip"
-  source_file = "./Cognito/define_auth_lambda.py"
+  source_file = "./cognito/define_auth_lambda.py"
   output_path = "./lambda_zip_archives/define_auth_lambda.zip"
 }
 
 data "archive_file" "create_auth_lambda" {
   type        = "zip"
-  source_file = "./Cognito/create_auth_lambda.py"
+  source_file = "./cognito/create_auth_lambda.py"
   output_path = "./lambda_zip_archives/create_auth_lambda.zip"
 }
 
 data "archive_file" "verify_auth_lambda" {
   type        = "zip"
-  source_file = "./Cognito/verify_auth_lambda.py"
+  source_file = "./cognito/verify_auth_lambda.py"
   output_path = "./lambda_zip_archives/verify_auth_lambda.zip"
 }
 
 data "archive_file" "pre_sign_up_lambda" {
   type        = "zip"
-  source_file = "./Cognito/pre_sign_up_lambda.py"
+  source_file = "./cognito/pre_sign_up_lambda.py"
   output_path = "./lambda_zip_archives/pre_sign_up_lambda.zip"
 }
 
-data "aws_iam_policy_document" "lambda_assume_role" {
+data "aws_iam_policy_document" "cognito_lambda_assume_role" {
   statement {
     effect = "Allow"
 
@@ -35,7 +35,7 @@ data "aws_iam_policy_document" "lambda_assume_role" {
   }
 }
 
-data "aws_iam_policy_document" "lambda_policies" {
+data "aws_iam_policy_document" "cognito_lambda_policies" {
   statement {
     effect = "Allow"
     actions = [
@@ -94,12 +94,12 @@ resource "aws_dynamodb_table" "challenge_table" {
 
 resource "aws_iam_role" "lambda_exec_role" {
   name               = "LambdaExecRole"
-  assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
+  assume_role_policy = data.aws_iam_policy_document.cognito_lambda_assume_role.json
 }
 
 resource "aws_iam_policy" "lambda_cognito_policy" {
   name   = "LambdaCognitoPolicy"
-  policy = data.aws_iam_policy_document.lambda_policies.json
+  policy = data.aws_iam_policy_document.cognito_lambda_policies.json
 }
 
 resource "aws_iam_role_policy_attachment" "lambda_role_policy_attachment" {

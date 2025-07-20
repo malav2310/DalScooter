@@ -12,5 +12,9 @@ provider "aws" {
 }
 
 module "cognito" {
-  source = "./Cognito"
+  source = "./cognito"
+}
+
+module "message_passing" {
+  source = "./message_passing"
 }

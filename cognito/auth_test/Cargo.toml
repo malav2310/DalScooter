@@ -1,0 +1,13 @@
+[package]
+name = "auth_test"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+aws-config = "1.8.1"
+aws-credential-types = "1.2.3"
+aws-sdk-cognitoidentityprovider = "1.87.0"
+aws-smithy-runtime-api = "1.8.1"
+colored = "3.0.0"
+inquire = "0.7.5"
+tokio = { version = "1.46.0", features = ["macros", "rt-multi-thread"] }

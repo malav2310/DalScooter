@@ -1,0 +1,102 @@
+
+# This function runs right as a user signs up. It stores their provided MFA answers in dynamodb
+def pre_sign_up(event):
+    import boto3
+    user_info = event['userInfo']
+    dynamodb = boto3.client('dynamodb')
+
+    dynamodb.put_item(user_info)
+
+    return event
+
+
+# The start of the multi-factor authentication chain.
+# If the session length is less than 3, and the last challenge was answered correctly (after the first session),
+# it tells cognito to issue a custom challenge
+def define_auth(event):
+    if event['session'].length == 0:
+        event['issueTokens] = false
+        event['failAuthentication'] = false
+        event['challenge'] = 'CUSTOM_CHALLENGE'
+    
+    else if event['session'].length < 3 and event['session']['lastResult'] == true:
+        event['issueTokens] = false
+        event['failAuthentication'] = false
+        event['challenge'] = 'CUSTOM_CHALLENGE'
+
+    else if event['session'].length == 3 and event['session']['lastResult'] == true:
+        event['issueTokens'] = true
+        event['failAuthentication'] = false
+    
+    else:
+        event['issueTokens] = false
+        event['failAuthentication'] = true
+    
+    return event
+
+
+# Retrieves the user information from dynamodb, then sets up a different challenge depending on
+# the session length with the client. The first session is a password challenge, the second is a challenge question, and the third is the caesar cipher
+def create_auth(event):
+    import boto3
+    import random
+
+    dynamodb = boto3.client('dynamodb')
+    user_info = dynamodb.get_item(Key=event['userName'])
+
+    if event['session'].length == 0:
+        event['privateChallengeParameters'] = {'challenge_type': 'PASSWORD'}
+
+    else if event['session'].length == 1:
+        event['publicChallengeParameters] = {'question': user_info['challengeQuestion']}
+        event['privateChallengeParameters'] = {
+            'challenge_type': 'CHALLENGE_QUESTION',
+            'answer': user_info['challengeAnswer']
+        }
+
+    else if event['session'].length == 2:
+        vals = [x for x in range(26)] # valid alphabet
+        random_vals = [random.choice(vals) for _ in range(5)] # get 5 random values from alphabet range
+
+        challenge_string = ''.join(chr(x + 65) for x in random_vals) # generate random string. the 65 turns the number into the appropriate ascii value
+        answer_string = ''.join(chr(((x + user_info['caesarKey]) % 26) + 65) for x in random_vals) # apply caesar key, modulo to wrap the value, add 65 to make it an ascii character
+
+        event['publicChallengeParameters] = {
+            'question': challenge_string
+        }
+
+        event['privateChallengeParameters'] = {
+            'challenge_type': 'CAESAR',
+            'answer': answer_string
+        }
+    
+    return event
+
+
+# Validates the given answer with the expected one retrieved from dynamodb
+# For username/password, it tries an admin auth. Since the client cant do username/password on its own, so this
+# is the best way to validate them without granting credentials.
+def verify_auth():
+    import boto3
+
+    challenge_type = event['privateChallengeParameters']['challenge_type']
+    given_answer = event['challengeAnswer']
+    correct = false
+
+    if challenge_type == 'PASSWORD':
+        cognito = boto3.client('cognito-idp')
+        
+        try:
+            cognito.admin_initiate_auth(
+                Username=event['userName']
+                Password=given_answer
+            )
+            correct = true
+        except cognito.exceptions.NotAuthorizedException:
+            correct = false
+    
+    elif challenge_type == 'CHALLENGE_QUESTION' or challenge_type == 'CAESAR':
+        correct = (given_answer == event['privateChallengeParameters']['answer'])
+
+    event['answerCorrect'] = correct
+    return event

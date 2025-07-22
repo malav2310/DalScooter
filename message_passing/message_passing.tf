@@ -36,6 +36,13 @@ data "aws_iam_policy_document" "feedback_lambda_policies" {
     ]
     resources = [aws_dynamodb_table.communication_log_table.arn]
   }
+  statement {
+    effect = "Allow"
+    actions = [
+      "sqs:SendMessage"
+    ]
+    resources = [aws_sqs_queue.feedback_sqs.arn]
+  }
 }
 
 resource "aws_iam_role" "feedback_lambda_role" {
@@ -56,11 +63,11 @@ resource "aws_iam_role_policy_attachment" "sns_lambda_policy_attachment" {
 resource "aws_dynamodb_table" "communication_log_table" {
   name         = "CommunicationLogTable"
   billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "id"
+  hash_key     = "referenceCode"
 
   attribute {
-    name = "id"
-    type = "N"
+    name = "referenceCode"
+    type = "S"
   }
 }
 
@@ -79,4 +86,34 @@ resource "aws_lambda_function" "feedback_lambda" {
   filename         = data.archive_file.forward_message_lambda.output_path
   source_code_hash = data.archive_file.forward_message_lambda.output_base64sha256
   runtime          = "python3.11"
+
+  environment {
+    variables = {
+      "dynamodb_table_name" = aws_dynamodb_table.communication_log_table.name
+    }
+  }
+}
+
+resource "aws_lambda_permission" "feedback_sns_lambda_permission" {
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.feedback_lambda.function_name
+  principal     = "sns.amazonaws.com"
+  source_arn    = aws_sns_topic.feedback_sns.arn
+}
+
+resource "aws_sns_topic_subscription" "feedback_sns_lambda_subscription" {
+  topic_arn  = aws_sns_topic.feedback_sns.arn
+  protocol   = "lambda"
+  endpoint   = aws_lambda_function.feedback_lambda.arn
+  depends_on = [aws_lambda_permission.feedback_sns_lambda_permission]
+}
+
+resource "aws_lambda_function_event_invoke_config" "feedback_sqs_lambda_destination" {
+  function_name = aws_lambda_function.feedback_lambda.function_name
+  
+  destination_config {
+    on_success {
+      destination = aws_sqs_queue.feedback_sqs.arn
+    }
+  }
 }

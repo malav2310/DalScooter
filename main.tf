@@ -18,3 +18,7 @@ module "cognito" {
 module "message_passing" {
   source = "./message_passing"
 }
+
+module "frontend" {
+  source="./Frontend"
+}

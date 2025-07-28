@@ -171,6 +171,12 @@ resource "aws_lambda_function" "pre_sign_up_lambda" {
   runtime          = "python3.11"
 }
 
-output "cognito_client_id" {
+output "cognito_user_pool_id" {
+  description = "ID of the Cognito User Pool"
+  value = aws_cognito_user_pool.cognito_user_pool.id
+}
+
+output "cognito_user_pool_client_id" {
+  description = "ID of the Cognito User Pool Client"
   value = aws_cognito_user_pool_client.user_pool_client.id
 }

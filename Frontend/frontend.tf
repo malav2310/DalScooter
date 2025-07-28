@@ -44,7 +44,7 @@ resource "aws_s3_bucket_ownership_controls" "frontend_ownership_ctl" {
     object_ownership = "BucketOwnerPreferred"
   }
 
-  depends_on = [ aws_s3_bucket_public_access_block.frontend_access_block ]
+  depends_on = [aws_s3_bucket_public_access_block.frontend_access_block]
 }
 
 resource "aws_s3_bucket_acl" "frontend_acl" {
@@ -78,6 +78,7 @@ resource "aws_s3_object" "frontend_objects" {
   key          = each.value
   source       = "${path.module}/cognito-auth-frontend/${data.external.frontend_build.result.build}/${each.value}"
   content_type = "text/html"
+  etag         = filemd5("${path.module}/cognito-auth-frontend/${data.external.frontend_build.result.build}/${each.value}")
 
   depends_on = [data.external.frontend_build, aws_s3_bucket_acl.frontend_acl]
 }
@@ -88,9 +89,11 @@ resource "aws_s3_bucket_website_configuration" "frontend_website_conf" {
   index_document {
     suffix = "index.html"
   }
+
+  depends_on = [ aws_s3_bucket_acl.frontend_acl ]
 }
 
 output "s3_website_endpoint_endpoint" {
   description = "S3 Website URL"
-  value = aws_s3_bucket_website_configuration.frontend_website_conf.website_endpoint
+  value       = aws_s3_bucket_website_configuration.frontend_website_conf.website_endpoint
 }

@@ -32,17 +32,19 @@ resource "aws_s3_bucket" "frontend_bucket" {
   bucket = "sdp-frontend-bucket"
 }
 
+resource "aws_s3_bucket_public_access_block" "frontend_access_block" {
+  bucket              = aws_s3_bucket.frontend_bucket.id
+  block_public_acls   = false
+  block_public_policy = false
+}
+
 resource "aws_s3_bucket_ownership_controls" "frontend_ownership_ctl" {
   bucket = aws_s3_bucket.frontend_bucket.id
   rule {
     object_ownership = "BucketOwnerPreferred"
   }
-}
 
-resource "aws_s3_bucket_public_access_block" "frontend_access_block" {
-  bucket              = aws_s3_bucket.frontend_bucket.id
-  block_public_acls   = false
-  block_public_policy = false
+  depends_on = [ aws_s3_bucket_public_access_block.frontend_access_block ]
 }
 
 resource "aws_s3_bucket_acl" "frontend_acl" {
@@ -50,17 +52,6 @@ resource "aws_s3_bucket_acl" "frontend_acl" {
   acl    = "public-read"
 
   depends_on = [aws_s3_bucket_public_access_block.frontend_access_block]
-}
-
-resource "aws_s3_object" "frontend_objects" {
-  bucket = aws_s3_bucket.frontend_bucket.id
-
-  for_each     = fileset("${path.module}/cognito-auth-frontend/${data.external.frontend_build.result.build}/", "**/*")
-  key          = each.value
-  source       = "${path.module}/cognito-auth-frontend/${data.external.frontend_build.result.build}/${each.value}"
-  content_type = "text/html"
-
-  depends_on = [data.external.frontend_build]
 }
 
 resource "aws_s3_bucket_policy" "frontend_bucket_policy" {
@@ -78,6 +69,17 @@ resource "aws_s3_bucket_policy" "frontend_bucket_policy" {
     ]
   })
   depends_on = [aws_s3_bucket_public_access_block.frontend_access_block]
+}
+
+resource "aws_s3_object" "frontend_objects" {
+  bucket = aws_s3_bucket.frontend_bucket.id
+
+  for_each     = fileset("${path.module}/cognito-auth-frontend/${data.external.frontend_build.result.build}/", "**/*")
+  key          = each.value
+  source       = "${path.module}/cognito-auth-frontend/${data.external.frontend_build.result.build}/${each.value}"
+  content_type = "text/html"
+
+  depends_on = [data.external.frontend_build, aws_s3_bucket_acl.frontend_acl]
 }
 
 resource "aws_s3_bucket_website_configuration" "frontend_website_conf" {

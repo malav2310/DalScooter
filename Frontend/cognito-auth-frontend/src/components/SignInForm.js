@@ -68,7 +68,9 @@ const SignInForm = () => {
       {step === 1 && (
         <>
           <input name="username" placeholder="Username" onChange={handleChange} required />
+          <br/>
           <input type="password" name="password" placeholder="Password" onChange={handleChange} required />
+          <br/>
           <button onClick={startAuth}>Sign In</button>
         </>
       )}
@@ -76,6 +78,7 @@ const SignInForm = () => {
         <>
           <p>{challengePrompt}</p>
           <input name="answer" placeholder="Answer" onChange={handleChange} required />
+          <br/>
           <button onClick={handleChallengeResponse}>Submit</button>
         </>
       )}

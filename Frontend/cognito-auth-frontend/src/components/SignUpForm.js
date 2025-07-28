@@ -46,10 +46,15 @@ const SignUpForm = () => {
     <form onSubmit={handleSubmit}>
       <h2>Sign Up</h2>
       <input name="username" placeholder="Username" onChange={handleChange} required />
+      <br/>
       <input type="password" name="password" placeholder="Password" onChange={handleChange} required />
+      <br/>
       <input name="challengeQuestion" placeholder="Challenge Question" onChange={handleChange} required />
+      <br/>
       <input name="challengeAnswer" placeholder="Answer" onChange={handleChange} required />
+      <br/>
       <input name="caesarKey" placeholder="Caesar Cipher Key (e.g., 3)" onChange={handleChange} required />
+      <br/>
       <button type="submit">Register</button>
       <p>{message}</p>
     </form>

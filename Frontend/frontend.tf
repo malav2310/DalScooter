@@ -1,13 +1,23 @@
 
-# variable "cognito_user_pool_id" {
-#   description = "ID of the Cognito User Pool"
-#   type        = string
-# }
+variable "cognito_user_pool_id" {
+  description = "ID of the Cognito User Pool"
+  type        = string
+}
 
-# variable "cognito_user_pool_client_id" {
-#   description = "ID of the Cognito User Pool Client"
-#   type        = string
-# }
+variable "cognito_user_pool_client_id" {
+  description = "ID of the Cognito User Pool Client"
+  type        = string
+}
+
+data "external" "set_environment" {
+  program = ["bash", "-c", <<EOF
+  echo REACT_APP_COGNITO_USER_POOL_ID = \'${var.cognito_user_pool_id}\' > .env
+  echo REACT_APP_COGNITO_CLIENT_ID = \'${var.cognito_user_pool_client_id}\' >> .env
+  echo "{\"status\": \"ok\"}"
+  EOF
+  ]
+  working_dir = "${path.module}/cognito-auth-frontend"
+}
 
 data "external" "frontend_build" {
   program = ["bash", "-c", <<EOF
@@ -15,6 +25,7 @@ data "external" "frontend_build" {
   EOF
   ]
   working_dir = "${path.module}/cognito-auth-frontend"
+  depends_on  = [data.external.set_environment]
 }
 
 resource "aws_s3_bucket" "frontend_bucket" {
@@ -29,25 +40,27 @@ resource "aws_s3_bucket_ownership_controls" "frontend_ownership_ctl" {
 }
 
 resource "aws_s3_bucket_public_access_block" "frontend_access_block" {
-  bucket = aws_s3_bucket.frontend_bucket.id
-  block_public_acls = false
+  bucket              = aws_s3_bucket.frontend_bucket.id
+  block_public_acls   = false
   block_public_policy = false
 }
 
 resource "aws_s3_bucket_acl" "frontend_acl" {
   bucket = aws_s3_bucket.frontend_bucket.id
-  acl = "public-read"
+  acl    = "public-read"
 
-  depends_on = [ aws_s3_bucket_public_access_block.frontend_access_block ]
+  depends_on = [aws_s3_bucket_public_access_block.frontend_access_block]
 }
 
 resource "aws_s3_object" "frontend_objects" {
   bucket = aws_s3_bucket.frontend_bucket.id
 
-  for_each = fileset("${path.module}/cognito-auth-frontend/build/", "**/*")
-  key = each.value
-  source = "${path.module}/cognito-auth-frontend/${data.external.frontend_build.result.build}/${each.value}"
+  for_each     = fileset("${path.module}/cognito-auth-frontend/${data.external.frontend_build.result.build}/", "**/*")
+  key          = each.value
+  source       = "${path.module}/cognito-auth-frontend/${data.external.frontend_build.result.build}/${each.value}"
   content_type = "text/html"
+
+  depends_on = [data.external.frontend_build]
 }
 
 resource "aws_s3_bucket_policy" "frontend_bucket_policy" {
@@ -55,16 +68,16 @@ resource "aws_s3_bucket_policy" "frontend_bucket_policy" {
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
-        {
-            Sid = "PublicReadGetObject"
-            Effect = "Allow"
-            Principal = "*"
-            Action = "s3:GetObject"
-            Resource = "${aws_s3_bucket.frontend_bucket.arn}/*"
-        }
+      {
+        Sid       = "PublicReadGetObject"
+        Effect    = "Allow"
+        Principal = "*"
+        Action    = "s3:GetObject"
+        Resource  = "${aws_s3_bucket.frontend_bucket.arn}/*"
+      }
     ]
   })
-  depends_on = [ aws_s3_bucket_public_access_block.frontend_access_block ]
+  depends_on = [aws_s3_bucket_public_access_block.frontend_access_block]
 }
 
 resource "aws_s3_bucket_website_configuration" "frontend_website_conf" {
@@ -73,4 +86,9 @@ resource "aws_s3_bucket_website_configuration" "frontend_website_conf" {
   index_document {
     suffix = "index.html"
   }
+}
+
+output "s3_website_endpoint_endpoint" {
+  description = "S3 Website URL"
+  value = aws_s3_bucket_website_configuration.frontend_website_conf.website_endpoint
 }

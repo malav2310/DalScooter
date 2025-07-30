@@ -2,3 +2,4 @@
 terraform.tfstate
 terraform.tfstate.backup
 lambda_zip_archives
+**.DS_Store

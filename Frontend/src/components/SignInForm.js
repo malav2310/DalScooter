@@ -93,6 +93,9 @@ const SignInForm = ({ onNavigateToSignUp, onAuthSuccess }) => {
         if (out.AuthenticationResult) {
           setIsSuccess(true)
           setMessage("Sign in successful!")
+
+          // out.AuthenticationResult contains the authentication tokens
+          // Route to post-sign in page here
         } else if (out.ChallengeName) {
           setCurrentChallenge({ ChallengeName: out.ChallengeName, ChallangeParameters: out.ChallengeParameters, Session: out.Session })
           setForm({ ...form, answer: "" })

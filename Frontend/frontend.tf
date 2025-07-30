@@ -16,7 +16,7 @@ data "external" "set_environment" {
   echo "{\"status\": \"ok\"}"
   EOF
   ]
-  working_dir = "${path.module}/cognito-auth-frontend"
+  working_dir = "${path.module}/"
 }
 
 data "external" "frontend_build" {
@@ -24,7 +24,7 @@ data "external" "frontend_build" {
   npm run build >&2 && echo "{\"build\": \"./build\"}"
   EOF
   ]
-  working_dir = "${path.module}/cognito-auth-frontend"
+  working_dir = "${path.module}/"
   depends_on  = [data.external.set_environment]
 }
 
@@ -74,11 +74,11 @@ resource "aws_s3_bucket_policy" "frontend_bucket_policy" {
 resource "aws_s3_object" "frontend_objects" {
   bucket = aws_s3_bucket.frontend_bucket.id
 
-  for_each     = fileset("${path.module}/cognito-auth-frontend/${data.external.frontend_build.result.build}/", "**/*")
+  for_each     = fileset("${path.module}/${data.external.frontend_build.result.build}/", "**/*")
   key          = each.value
-  source       = "${path.module}/cognito-auth-frontend/${data.external.frontend_build.result.build}/${each.value}"
+  source       = "${path.module}/${data.external.frontend_build.result.build}/${each.value}"
   content_type = "text/html"
-  etag         = filemd5("${path.module}/cognito-auth-frontend/${data.external.frontend_build.result.build}/${each.value}")
+  etag         = filemd5("${path.module}/${data.external.frontend_build.result.build}/${each.value}")
 
   depends_on = [data.external.frontend_build, aws_s3_bucket_acl.frontend_acl]
 }

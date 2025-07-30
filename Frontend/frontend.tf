@@ -13,6 +13,7 @@ data "external" "set_environment" {
   program = ["bash", "-c", <<EOF
   echo REACT_APP_COGNITO_USER_POOL_ID = \'${var.cognito_user_pool_id}\' > .env
   echo REACT_APP_COGNITO_CLIENT_ID = \'${var.cognito_user_pool_client_id}\' >> .env
+  echo REACT_APP_REGION = \'us-east-1\' >> .env
   echo "{\"status\": \"ok\"}"
   EOF
   ]

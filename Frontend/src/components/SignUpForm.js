@@ -1,8 +1,5 @@
-"use client"
-
 import { useState } from "react"
-import { CognitoUserPool } from "amazon-cognito-identity-js"
-import { config } from "../config"
+import { CognitoIdentityProviderClient, SignUpCommand } from "@aws-sdk/client-cognito-identity-provider"
 
 const SignUpForm = ({ onNavigateToSignIn }) => {
   const [form, setForm] = useState({
@@ -16,41 +13,41 @@ const SignUpForm = ({ onNavigateToSignIn }) => {
   const [isLoading, setIsLoading] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
 
-  const pool = new CognitoUserPool({
-    UserPoolId: config.userPoolId,
-    ClientId: config.clientId,
-  })
+  const cognitoClient = new CognitoIdentityProviderClient({ region: process.env.REACT_APP_REGION })
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value })
     if (message) setMessage("")
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     setIsLoading(true)
     setMessage("")
 
-    pool.signUp(
-      form.username,
-      form.password,
-      [
-        { Name: "custom:challenge_question", Value: form.challengeQuestion },
-        { Name: "custom:challenge_answer", Value: form.challengeAnswer },
-        { Name: "custom:caesar_key", Value: form.caesarKey },
-      ],
-      null,
-      (err, result) => {
-        setIsLoading(false)
-        if (err) {
-          setMessage(err.message)
-          setIsSuccess(false)
-        } else {
-          setMessage("Sign up successful! Please check your email to verify your account.")
-          setIsSuccess(true)
-        }
-      },
-    )
+    const signUp = new SignUpCommand({
+      ClientId: process.env.REACT_APP_COGNITO_CLIENT_ID,
+      Username: form.username,
+      Password: form.password,
+      ClientMetadata: {
+        challenge_question: form.challengeQuestion,
+        challenge_answer: form.challengeAnswer,
+        caesar_key: form.caesarKey
+      }
+    })
+
+    try {
+      const out = await cognitoClient.send(signUp)
+      setIsLoading(false)
+      if (out.UserConfirmed) {
+        setMessage("Sign up successful!")
+        setIsSuccess(true)
+      }
+    } catch (e) {
+      setIsLoading(false)
+      setMessage(e.message)
+      setIsSuccess(false)
+    }
   }
 
   return (
@@ -337,7 +334,7 @@ const SignUpForm = ({ onNavigateToSignIn }) => {
                 }}
               />
               <p style={{ fontSize: "0.75rem", color: "#6b7280", marginTop: "0.25rem", margin: "0.25rem 0 0 0" }}>
-                Choose a number between 1-25 for encryption
+                Pick a Caesar-Cipher key
               </p>
             </div>
 

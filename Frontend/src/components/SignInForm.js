@@ -1,105 +1,110 @@
-"use client"
-
 import { useState } from "react"
-import { CognitoUser, AuthenticationDetails } from "amazon-cognito-identity-js"
-import { config } from "../config"
-import { CognitoUserPool } from "amazon-cognito-identity-js"
+import { CognitoIdentityProviderClient, InitiateAuthCommand, RespondToAuthChallengeCommand } from "@aws-sdk/client-cognito-identity-provider"
+
+const AUTH_FLOW = "CUSTOM_AUTH"
+const CLIENT_ID = process.env.REACT_APP_COGNITO_CLIENT_ID
 
 const SignInForm = ({ onNavigateToSignUp, onAuthSuccess }) => {
   const [form, setForm] = useState({ username: "", password: "", answer: "" })
   const [step, setStep] = useState(1)
   const [message, setMessage] = useState("")
-  const [user, setUser] = useState(null)
-  const [challengePrompt, setChallengePrompt] = useState("")
+  const [currentChallenge, setCurrentChallenge] = useState(undefined)
   const [isLoading, setIsLoading] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
 
-  const pool = new CognitoUserPool({
-    UserPoolId: config.userPoolId,
-    ClientId: config.clientId,
-  })
+  const cognitoClient = new CognitoIdentityProviderClient({ region: process.env.REACT_APP_REGION })
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value })
     if (message) setMessage("")
   }
 
-  const startAuth = () => {
+  const startAuth = async () => {
     setIsLoading(true)
     setMessage("")
 
-    const userData = {
-      Username: form.username,
-      Pool: pool,
+    const signIn = new InitiateAuthCommand({
+      ClientId: CLIENT_ID,
+      AuthFlow: AUTH_FLOW,
+      AuthParameters: {
+        USERNAME: form.username,
+      },
+    })
+    let initRes = undefined
+
+    try {
+      initRes = await cognitoClient.send(signIn)
+    } catch (e) {
+      setIsLoading(false)
+      setIsSuccess(false)
+      setMessage(e.message)
+      setMessage("error")
+      return
     }
 
-    const cognitoUser = new CognitoUser(userData)
-    setUser(cognitoUser)
-
-    const authDetails = new AuthenticationDetails({
-      Username: form.username,
-      Password: form.password,
-    })
-
-    cognitoUser.initiateAuth(authDetails, {
-      onSuccess: (result) => {
-        setIsLoading(false)
-        setMessage("Authentication successful!")
-        setIsSuccess(true)
-
-        // Call the success callback with user data
-        if (onAuthSuccess) {
-          onAuthSuccess({
-            username: form.username,
-            tokens: result,
-            user: cognitoUser,
-          })
+    if (initRes.AuthenticationResult) {
+      setIsLoading(false)
+      setIsSuccess(true)
+      setMessage("Sign in successful!")
+    } else if (initRes.ChallengeName) {
+      const firstResponse = new RespondToAuthChallengeCommand({
+        ClientId: CLIENT_ID,
+        ChallengeName: initRes.ChallengeName,
+        Session: initRes.Session,
+        ChallengeResponses: {
+          USERNAME: initRes.ChallengeParameters.USERNAME,
+          ANSWER: form.password,
+        },
+        ClientMetadata: {
+          "CLIENT_ID": CLIENT_ID
         }
-      },
-      onFailure: (err) => {
+      })
+
+      try {
+        cognitoClient.send(firstResponse).then(out => {
+          setIsLoading(false)
+          setStep(2)
+          setCurrentChallenge({ ChallengeName: out.ChallengeName, ChallangeParameters: out.ChallengeParameters, Session: out.Session })
+        })
+      } catch (e) {
         setIsLoading(false)
-        setMessage(err.message)
         setIsSuccess(false)
-      },
-      customChallenge: (challenge) => {
-        setIsLoading(false)
-        const params = challenge.getChallengeParam()
-        setChallengePrompt(params.prompt || params.question || "Answer the security challenge")
-        setStep(2)
-      },
-    })
+        setMessage(e.message)
+      }
+    }
   }
 
   const handleChallengeResponse = () => {
     setIsLoading(true)
     setMessage("")
 
-    user.sendCustomChallengeAnswer(form.answer, {
-      onSuccess: (result) => {
-        setIsLoading(false)
-        setMessage("Authentication complete! Welcome back.")
-        setIsSuccess(true)
-
-        // Call the success callback with user data
-        if (onAuthSuccess) {
-          onAuthSuccess({
-            username: form.username,
-            tokens: result,
-            user: user,
-          })
-        }
-      },
-      onFailure: (err) => {
-        setIsLoading(false)
-        setMessage(err.message)
-        setIsSuccess(false)
-      },
-      customChallenge: (challenge) => {
-        setIsLoading(false)
-        const params = challenge.getChallengeParam()
-        setChallengePrompt(params.prompt || params.question || "Answer the security challenge")
-      },
+    const challengeResp = new RespondToAuthChallengeCommand({
+      ClientId: CLIENT_ID,
+      ChallengeName: currentChallenge.ChallengeName,
+      Session: currentChallenge.Session,
+      ChallengeResponses: {
+        "USERNAME": form.username,
+        "ANSWER": form.answer,
+      }
     })
+
+    try {
+      cognitoClient.send(challengeResp).then(out => {
+        if (out.AuthenticationResult) {
+          setIsSuccess(true)
+          setMessage("Sign in successful!")
+        } else if (out.ChallengeName) {
+          setCurrentChallenge({ ChallengeName: out.ChallengeName, ChallangeParameters: out.ChallengeParameters, Session: out.Session })
+          setForm({ ...form, answer: "" })
+          setStep(step + 1)
+        }
+      })
+    } catch (e) {
+      setMessage(e.message)
+      setIsSuccess(false)
+    }
+
+    setIsLoading(false)
   }
 
   const handleSubmit = (e) => {
@@ -221,6 +226,30 @@ const SignInForm = ({ onNavigateToSignUp, onAuthSuccess }) => {
               }}
             >
               2
+            </div>
+            <div
+              style={{
+                flex: 1,
+                height: "2px",
+                backgroundColor: step > 2 ? "#2563eb" : "#e5e7eb",
+                margin: "0 0.5rem",
+              }}
+            ></div>
+            <div
+              style={{
+                width: "2rem",
+                height: "2rem",
+                borderRadius: "50%",
+                backgroundColor: step > 2 ? "#2563eb" : "#e5e7eb",
+                color: step > 1 ? "white" : "#6b7280",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "0.875rem",
+                fontWeight: "bold",
+              }}
+            >
+              3
             </div>
           </div>
         </div>
@@ -347,7 +376,83 @@ const SignInForm = ({ onNavigateToSignUp, onAuthSuccess }) => {
                     </svg>
                     <span style={{ fontSize: "0.875rem", fontWeight: "500", color: "#374151" }}>Security Question</span>
                   </div>
-                  <p style={{ fontSize: "0.875rem", color: "#6b7280", margin: 0 }}>{challengePrompt}</p>
+                  <p style={{ fontSize: "0.875rem", color: "#6b7280", margin: 0 }}>{currentChallenge.ChallangeParameters.question}</p>
+                </div>
+
+                <div style={{ marginBottom: "1rem" }}>
+                  <label
+                    htmlFor="answer"
+                    style={{
+                      display: "block",
+                      fontSize: "0.875rem",
+                      fontWeight: "500",
+                      color: "#374151",
+                      marginBottom: "0.25rem",
+                    }}
+                  >
+                    Your Answer
+                  </label>
+                  <input
+                    id="answer"
+                    name="answer"
+                    type="text"
+                    placeholder="Enter your answer"
+                    value={form.answer}
+                    onChange={handleChange}
+                    required
+                    disabled={isLoading}
+                    style={{
+                      width: "100%",
+                      padding: "0.5rem 0.75rem",
+                      border: "1px solid #d1d5db",
+                      borderRadius: "0.375rem",
+                      fontSize: "0.875rem",
+                      outline: "none",
+                      transition: "border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out",
+                      backgroundColor: isLoading ? "#f9fafb" : "white",
+                      cursor: isLoading ? "not-allowed" : "text",
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = "#3b82f6"
+                      e.target.style.boxShadow = "0 0 0 3px rgba(59, 130, 246, 0.1)"
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = "#d1d5db"
+                      e.target.style.boxShadow = "none"
+                    }}
+                  />
+                </div>
+              </>
+            )}
+
+            {step === 3 && (
+              <>
+                <div
+                  style={{
+                    backgroundColor: "#f8fafc",
+                    border: "1px solid #e2e8f0",
+                    borderRadius: "0.375rem",
+                    padding: "1rem",
+                    marginBottom: "1rem",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", marginBottom: "0.5rem" }}>
+                    <svg
+                      style={{ width: "1.25rem", height: "1.25rem", color: "#3b82f6", marginRight: "0.5rem" }}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    <span style={{ fontSize: "0.875rem", fontWeight: "500", color: "#374151" }}>Please apply your caesar key to this string:</span>
+                  </div>
+                  <p style={{ fontSize: "0.875rem", color: "#6b7280", margin: 0 }}>{currentChallenge.ChallangeParameters.question}</p>
                 </div>
 
                 <div style={{ marginBottom: "1rem" }}>

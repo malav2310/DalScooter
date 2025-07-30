@@ -4,7 +4,7 @@ import { useState } from "react"
 import { CognitoUserPool } from "amazon-cognito-identity-js"
 import { config } from "../config"
 
-const SignUpForm = () => {
+const SignUpForm = ({ onNavigateToSignIn }) => {
   const [form, setForm] = useState({
     username: "",
     password: "",
@@ -26,7 +26,7 @@ const SignUpForm = () => {
     if (message) setMessage("")
   }
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault()
     setIsLoading(true)
     setMessage("")
@@ -54,11 +54,51 @@ const SignUpForm = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <div className="w-full max-w-md bg-white rounded-lg shadow-lg">
-        <div className="p-6 text-center border-b">
-          <div className="mx-auto w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-            <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "linear-gradient(135deg, #f0f9ff 0%, #e0e7ff 100%)",
+        padding: "1rem",
+      }}
+    >
+      <div
+        style={{
+          width: "100%",
+          maxWidth: "28rem",
+          backgroundColor: "white",
+          borderRadius: "0.5rem",
+          boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+        }}
+      >
+        {/* Header */}
+        <div
+          style={{
+            padding: "1.5rem",
+            textAlign: "center",
+            borderBottom: "1px solid #e5e7eb",
+          }}
+        >
+          <div
+            style={{
+              width: "3rem",
+              height: "3rem",
+              backgroundColor: "#dbeafe",
+              borderRadius: "50%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              margin: "0 auto 1rem auto",
+            }}
+          >
+            <svg
+              style={{ width: "1.5rem", height: "1.5rem", color: "#2563eb" }}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -67,14 +107,26 @@ const SignUpForm = () => {
               />
             </svg>
           </div>
-          <h2 className="text-2xl font-bold text-gray-900">Create Account</h2>
-          <p className="text-gray-600 mt-2">Sign up for secure access with custom authentication</p>
+          <h2 style={{ fontSize: "1.5rem", fontWeight: "bold", color: "#111827", margin: 0 }}>Create Account</h2>
+          <p style={{ color: "#6b7280", marginTop: "0.5rem", margin: "0.5rem 0 0 0" }}>
+            Sign up for secure access with custom authentication
+          </p>
         </div>
 
-        <div className="p-6">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
+        {/* Form */}
+        <div style={{ padding: "1.5rem" }}>
+          <form onSubmit={handleSubmit}>
+            <div style={{ marginBottom: "1rem" }}>
+              <label
+                htmlFor="username"
+                style={{
+                  display: "block",
+                  fontSize: "0.875rem",
+                  fontWeight: "500",
+                  color: "#374151",
+                  marginBottom: "0.25rem",
+                }}
+              >
                 Username
               </label>
               <input
@@ -86,12 +138,39 @@ const SignUpForm = () => {
                 onChange={handleChange}
                 required
                 disabled={isLoading}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                style={{
+                  width: "100%",
+                  padding: "0.5rem 0.75rem",
+                  border: "1px solid #d1d5db",
+                  borderRadius: "0.375rem",
+                  fontSize: "0.875rem",
+                  outline: "none",
+                  transition: "border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out",
+                  backgroundColor: isLoading ? "#f9fafb" : "white",
+                  cursor: isLoading ? "not-allowed" : "text",
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = "#3b82f6"
+                  e.target.style.boxShadow = "0 0 0 3px rgba(59, 130, 246, 0.1)"
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = "#d1d5db"
+                  e.target.style.boxShadow = "none"
+                }}
               />
             </div>
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+            <div style={{ marginBottom: "1rem" }}>
+              <label
+                htmlFor="password"
+                style={{
+                  display: "block",
+                  fontSize: "0.875rem",
+                  fontWeight: "500",
+                  color: "#374151",
+                  marginBottom: "0.25rem",
+                }}
+              >
                 Password
               </label>
               <input
@@ -103,12 +182,39 @@ const SignUpForm = () => {
                 onChange={handleChange}
                 required
                 disabled={isLoading}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                style={{
+                  width: "100%",
+                  padding: "0.5rem 0.75rem",
+                  border: "1px solid #d1d5db",
+                  borderRadius: "0.375rem",
+                  fontSize: "0.875rem",
+                  outline: "none",
+                  transition: "border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out",
+                  backgroundColor: isLoading ? "#f9fafb" : "white",
+                  cursor: isLoading ? "not-allowed" : "text",
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = "#3b82f6"
+                  e.target.style.boxShadow = "0 0 0 3px rgba(59, 130, 246, 0.1)"
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = "#d1d5db"
+                  e.target.style.boxShadow = "none"
+                }}
               />
             </div>
 
-            <div>
-              <label htmlFor="challengeQuestion" className="block text-sm font-medium text-gray-700 mb-1">
+            <div style={{ marginBottom: "1rem" }}>
+              <label
+                htmlFor="challengeQuestion"
+                style={{
+                  display: "block",
+                  fontSize: "0.875rem",
+                  fontWeight: "500",
+                  color: "#374151",
+                  marginBottom: "0.25rem",
+                }}
+              >
                 Security Question
               </label>
               <input
@@ -120,12 +226,39 @@ const SignUpForm = () => {
                 onChange={handleChange}
                 required
                 disabled={isLoading}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                style={{
+                  width: "100%",
+                  padding: "0.5rem 0.75rem",
+                  border: "1px solid #d1d5db",
+                  borderRadius: "0.375rem",
+                  fontSize: "0.875rem",
+                  outline: "none",
+                  transition: "border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out",
+                  backgroundColor: isLoading ? "#f9fafb" : "white",
+                  cursor: isLoading ? "not-allowed" : "text",
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = "#3b82f6"
+                  e.target.style.boxShadow = "0 0 0 3px rgba(59, 130, 246, 0.1)"
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = "#d1d5db"
+                  e.target.style.boxShadow = "none"
+                }}
               />
             </div>
 
-            <div>
-              <label htmlFor="challengeAnswer" className="block text-sm font-medium text-gray-700 mb-1">
+            <div style={{ marginBottom: "1rem" }}>
+              <label
+                htmlFor="challengeAnswer"
+                style={{
+                  display: "block",
+                  fontSize: "0.875rem",
+                  fontWeight: "500",
+                  color: "#374151",
+                  marginBottom: "0.25rem",
+                }}
+              >
                 Security Answer
               </label>
               <input
@@ -137,12 +270,39 @@ const SignUpForm = () => {
                 onChange={handleChange}
                 required
                 disabled={isLoading}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                style={{
+                  width: "100%",
+                  padding: "0.5rem 0.75rem",
+                  border: "1px solid #d1d5db",
+                  borderRadius: "0.375rem",
+                  fontSize: "0.875rem",
+                  outline: "none",
+                  transition: "border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out",
+                  backgroundColor: isLoading ? "#f9fafb" : "white",
+                  cursor: isLoading ? "not-allowed" : "text",
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = "#3b82f6"
+                  e.target.style.boxShadow = "0 0 0 3px rgba(59, 130, 246, 0.1)"
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = "#d1d5db"
+                  e.target.style.boxShadow = "none"
+                }}
               />
             </div>
 
-            <div>
-              <label htmlFor="caesarKey" className="block text-sm font-medium text-gray-700 mb-1">
+            <div style={{ marginBottom: "1rem" }}>
+              <label
+                htmlFor="caesarKey"
+                style={{
+                  display: "block",
+                  fontSize: "0.875rem",
+                  fontWeight: "500",
+                  color: "#374151",
+                  marginBottom: "0.25rem",
+                }}
+              >
                 Caesar Cipher Key
               </label>
               <input
@@ -156,34 +316,93 @@ const SignUpForm = () => {
                 disabled={isLoading}
                 min="1"
                 max="25"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                style={{
+                  width: "100%",
+                  padding: "0.5rem 0.75rem",
+                  border: "1px solid #d1d5db",
+                  borderRadius: "0.375rem",
+                  fontSize: "0.875rem",
+                  outline: "none",
+                  transition: "border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out",
+                  backgroundColor: isLoading ? "#f9fafb" : "white",
+                  cursor: isLoading ? "not-allowed" : "text",
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = "#3b82f6"
+                  e.target.style.boxShadow = "0 0 0 3px rgba(59, 130, 246, 0.1)"
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = "#d1d5db"
+                  e.target.style.boxShadow = "none"
+                }}
               />
-              <p className="text-xs text-gray-500 mt-1">Choose a number between 1-25 for encryption</p>
+              <p style={{ fontSize: "0.75rem", color: "#6b7280", marginTop: "0.25rem", margin: "0.25rem 0 0 0" }}>
+                Choose a number between 1-25 for encryption
+              </p>
             </div>
 
             {message && (
               <div
-                className={`p-3 rounded-md ${isSuccess ? "bg-green-50 border border-green-200" : "bg-red-50 border border-red-200"}`}
+                style={{
+                  padding: "0.75rem",
+                  borderRadius: "0.375rem",
+                  marginBottom: "1rem",
+                  backgroundColor: isSuccess ? "#f0fdf4" : "#fef2f2",
+                  border: `1px solid ${isSuccess ? "#bbf7d0" : "#fecaca"}`,
+                }}
               >
-                <p className={`text-sm ${isSuccess ? "text-green-800" : "text-red-800"}`}>{message}</p>
+                <p
+                  style={{
+                    fontSize: "0.875rem",
+                    color: isSuccess ? "#166534" : "#dc2626",
+                    margin: 0,
+                  }}
+                >
+                  {message}
+                </p>
               </div>
             )}
 
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-blue-400 disabled:cursor-not-allowed transition-colors duration-200"
+              style={{
+                width: "100%",
+                backgroundColor: isLoading ? "#93c5fd" : "#2563eb",
+                color: "white",
+                padding: "0.5rem 1rem",
+                borderRadius: "0.375rem",
+                border: "none",
+                fontSize: "0.875rem",
+                fontWeight: "500",
+                cursor: isLoading ? "not-allowed" : "pointer",
+                transition: "background-color 0.2s ease-in-out",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+              onMouseOver={(e) => {
+                if (!isLoading) e.target.style.backgroundColor = "#1d4ed8"
+              }}
+              onMouseOut={(e) => {
+                if (!isLoading) e.target.style.backgroundColor = "#2563eb"
+              }}
             >
               {isLoading ? (
-                <span className="flex items-center justify-center">
+                <>
                   <svg
-                    className="animate-spin -ml-1 mr-3 h-4 w-4 text-white"
+                    style={{
+                      animation: "spin 1s linear infinite",
+                      marginRight: "0.5rem",
+                      height: "1rem",
+                      width: "1rem",
+                    }}
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"
                   >
                     <circle
-                      className="opacity-25"
+                      style={{ opacity: 0.25 }}
                       cx="12"
                       cy="12"
                       r="10"
@@ -191,29 +410,49 @@ const SignUpForm = () => {
                       strokeWidth="4"
                     ></circle>
                     <path
-                      className="opacity-75"
+                      style={{ opacity: 0.75 }}
                       fill="currentColor"
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                     ></path>
                   </svg>
                   Creating Account...
-                </span>
+                </>
               ) : (
                 "Create Account"
               )}
             </button>
           </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
+          <div style={{ marginTop: "1.5rem", textAlign: "center" }}>
+            <p style={{ fontSize: "0.875rem", color: "#6b7280", margin: 0 }}>
               Already have an account?{" "}
-              <a href="/signin" className="text-blue-600 hover:underline font-medium">
+              <button
+                onClick={onNavigateToSignIn}
+                style={{
+                  color: "#2563eb",
+                  textDecoration: "none",
+                  fontWeight: "500",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  fontSize: "0.875rem",
+                }}
+                onMouseOver={(e) => (e.target.style.textDecoration = "underline")}
+                onMouseOut={(e) => (e.target.style.textDecoration = "none")}
+              >
                 Sign in here
-              </a>
+              </button>
             </p>
           </div>
         </div>
       </div>
+
+      <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   )
 }

@@ -13,6 +13,8 @@ provider "aws" {
 
 module "cognito" {
   source = "./cognito"
+
+  aws_region = "us-east-1"
 }
 
 # module "message_passing" {

@@ -1,3 +1,7 @@
+variable "aws_region" {
+  type = string
+}
+
 data "archive_file" "define_auth_lambda" {
   type        = "zip"
   source_file = "./cognito/define_auth_lambda.py"
@@ -65,6 +69,36 @@ data "aws_iam_policy_document" "cognito_lambda_policies" {
   }
 }
 
+data "aws_iam_policy_document" "cognito_user_assume_document" {
+  statement {
+    effect  = "Allow"
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+    principals {
+      type        = "Federated"
+      identifiers = ["cognito-identity.amazonaws.com"]
+    }
+    condition {
+      test     = "StringLike"
+      variable = "cognito-identity.amazonaws.com:aud"
+
+      values = [aws_cognito_identity_pool.user_identity_pool.id]
+    }
+    condition {
+      test     = "ForAnyValue:StringLike"
+      variable = "cognito-identity.amazonaws.com:amr"
+
+      values = ["authenticated"]
+    }
+  }
+}
+
+# data "aws_iam_policy_document" "user_role_permissions" {
+#   statement {
+#     effect = "Allow"
+#     # Fill the rest with the permissions to be used with this role
+#   }
+# }
+
 resource "aws_cognito_user_pool" "cognito_user_pool" {
   name = "CognitoUserPool"
   lambda_config {
@@ -82,6 +116,18 @@ resource "aws_cognito_user_pool_client" "user_pool_client" {
   explicit_auth_flows = ["ALLOW_CUSTOM_AUTH", "ALLOW_ADMIN_USER_PASSWORD_AUTH"]
 }
 
+resource "aws_cognito_identity_pool" "user_identity_pool" {
+  identity_pool_name               = "UserIdentityPool"
+  allow_unauthenticated_identities = true
+  allow_classic_flow               = false
+
+  cognito_identity_providers {
+    client_id               = aws_cognito_user_pool_client.user_pool_client.id
+    provider_name           = "cognito-idp.${var.aws_region}.amazonaws.com/${aws_cognito_user_pool.cognito_user_pool.id}"
+    server_side_token_check = true
+  }
+}
+
 resource "aws_dynamodb_table" "challenge_table" {
   name         = "UserChallenges"
   billing_mode = "PAY_PER_REQUEST"
@@ -90,6 +136,11 @@ resource "aws_dynamodb_table" "challenge_table" {
     name = "userId"
     type = "S"
   }
+}
+
+resource "aws_iam_role" "user_role" {
+  name = "UserRole"
+  assume_role_policy = data.aws_iam_policy_document.cognito_user_assume_document.json
 }
 
 resource "aws_iam_role" "lambda_exec_role" {
@@ -173,10 +224,10 @@ resource "aws_lambda_function" "pre_sign_up_lambda" {
 
 output "cognito_user_pool_id" {
   description = "ID of the Cognito User Pool"
-  value = aws_cognito_user_pool.cognito_user_pool.id
+  value       = aws_cognito_user_pool.cognito_user_pool.id
 }
 
 output "cognito_user_pool_client_id" {
   description = "ID of the Cognito User Pool Client"
-  value = aws_cognito_user_pool_client.user_pool_client.id
+  value       = aws_cognito_user_pool_client.user_pool_client.id
 }

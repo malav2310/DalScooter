@@ -1,5 +1,46 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# Dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# Next.js
+/.next/
+/out/
+next-env.d.ts
+
+# Production
+/build
+
+# Testing
+/coverage
+
+# Terraform
 .terraform*
 terraform.tfstate
 terraform.tfstate.backup
 lambda_zip_archives
+
+# Debug Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Miscellaneous
+.DS_Store
 **.DS_Store
+*.pem
+*.tsbuildinfo
+
+# Environment Files (can opt-in for committing if needed)
+/.env*
+
+# Vercel
+.vercel

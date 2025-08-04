@@ -1,5 +1,5 @@
 output "api_url" {
-  value = "${aws_api_gateway_deployment.deployment.invoke_url}/feedback"
+  value       = "${aws_api_gateway_stage.prod.invoke_url}/feedback"
   description = "API Gateway endpoint for feedback"
 }
 
@@ -9,4 +9,14 @@ output "submit_feedback_lambda" {
 
 output "get_feedback_lambda" {
   value = aws_lambda_function.get_feedback.arn
+}
+
+output "lambda_execution_role_arn" {
+  value       = aws_iam_role.lambda_execution_role.arn
+  description = "ARN of the Lambda execution role"
+}
+
+output "dynamodb_table_name" {
+  value       = aws_dynamodb_table.feedback_table.name
+  description = "Name of the DynamoDB table"
 }

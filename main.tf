@@ -17,9 +17,9 @@ module "cognito" {
   aws_region = "us-east-1"
 }
 
-# module "message_passing" {
-#   source = "./message_passing"
-# }
+module "message_passing" {
+  source = "./message_passing"
+}
 
 module "frontend" {
   source="./Frontend"

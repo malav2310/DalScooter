@@ -2,27 +2,35 @@ variable "aws_region" {
   type = string
 }
 
+variable "submit_feedback_lambda" {
+  type = string
+}
+
+variable "get_feedback_lambda" {
+  type = string
+}
+
 data "archive_file" "define_auth_lambda" {
   type        = "zip"
-  source_file = "./cognito/define_auth_lambda.py"
+  source_file = "./cognito/functions/define_auth_lambda.py"
   output_path = "./lambda_zip_archives/define_auth_lambda.zip"
 }
 
 data "archive_file" "create_auth_lambda" {
   type        = "zip"
-  source_file = "./cognito/create_auth_lambda.py"
+  source_file = "./cognito/functions/create_auth_lambda.py"
   output_path = "./lambda_zip_archives/create_auth_lambda.zip"
 }
 
 data "archive_file" "verify_auth_lambda" {
   type        = "zip"
-  source_file = "./cognito/verify_auth_lambda.py"
+  source_file = "./cognito/functions/verify_auth_lambda.py"
   output_path = "./lambda_zip_archives/verify_auth_lambda.zip"
 }
 
 data "archive_file" "pre_sign_up_lambda" {
   type        = "zip"
-  source_file = "./cognito/pre_sign_up_lambda.py"
+  source_file = "./cognito/functions/pre_sign_up_lambda.py"
   output_path = "./lambda_zip_archives/pre_sign_up_lambda.zip"
 }
 
@@ -92,12 +100,17 @@ data "aws_iam_policy_document" "cognito_user_assume_document" {
   }
 }
 
-# data "aws_iam_policy_document" "user_role_permissions" {
-#   statement {
-#     effect = "Allow"
-#     # Fill the rest with the permissions to be used with this role
-#   }
-# }
+data "aws_iam_policy_document" "user_role_permissions" {
+  statement {
+    effect = "Allow"
+    # Fill the rest with the permissions to be used with this role
+    actions = ["lambda:InvokeFunction"]
+    resources = [
+      var.get_feedback_lambda,
+      var.submit_feedback_lambda
+    ]
+  }
+}
 
 resource "aws_cognito_user_pool" "cognito_user_pool" {
   name = "CognitoUserPool"

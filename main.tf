@@ -14,21 +14,13 @@ provider "aws" {
 module "cognito" {
   source = "./cognito"
 
-  aws_region = "us-east-1"
+  aws_region             = "us-east-1"
+  submit_feedback_lambda = module.data_visualization_and_analytics.submit_feedback_lambda
+  get_feedback_lambda    = module.data_visualization_and_analytics.get_feedback_lambda
 }
 
 module "message_passing" {
   source = "./message_passing"
-<<<<<<< HEAD
-}
-
-module "frontend" {
-  source="./Frontend"
-
-  cognito_user_pool_id = module.cognito.cognito_user_pool_id
-  cognito_user_pool_client_id = module.cognito.cognito_user_pool_client_id
-=======
->>>>>>> refs/remotes/origin/main
 }
 
 #module "frontend" {
@@ -39,25 +31,25 @@ module "frontend" {
 #}
 
 module "data_visualization_and_analytics" {
- source = "./data_visualization_and_analytics"
-  
+  source = "./data_visualization_and_analytics"
+
   project_name = "dalscooter"
 }
 
 module "notifications" {
-  source="./Notifications"
+  source = "./Notifications"
 }
 
 module "virtual_assistant" {
   source = "./virtual_assistant"
-  
-  project_name = "dalscooter"  
-  environment  = "dev"         
+
+  project_name = "dalscooter"
+  environment  = "dev"
 }
 
 module "bike_management" {
   source = "./bike_management"
-  
+
   environment  = "dev"
   project_name = "dalscooter"
 }

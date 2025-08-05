@@ -121,7 +121,7 @@ resource "aws_lambda_function" "submit_feedback" {
   filename         = data.archive_file.submit_feedback_zip.output_path
   function_name    = "${var.project_name}-submit-feedback"
   role             = aws_iam_role.lambda_execution_role.arn
-  handler          = "submit_feedback.handler"
+  handler          = "submit_feedback.lambda_handler"
   runtime          = "python3.9"
   timeout          = 30
   source_code_hash = data.archive_file.submit_feedback_zip.output_base64sha256
@@ -143,7 +143,7 @@ resource "aws_lambda_function" "get_feedback" {
   filename         = data.archive_file.get_feedback_zip.output_path
   function_name    = "${var.project_name}-get-feedback"
   role             = aws_iam_role.lambda_execution_role.arn
-  handler          = "get_feedback.handler"
+  handler          = "get_feedback.lambda_handler"
   runtime          = "python3.9"
   timeout          = 30
   source_code_hash = data.archive_file.get_feedback_zip.output_base64sha256

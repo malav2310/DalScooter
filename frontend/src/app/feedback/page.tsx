@@ -88,8 +88,17 @@ export default function FeedbackPage() {
         const out = await lambdaClient.send(getFeedbackCommand)
         console.log(out)
 
+        if (out.Payload) {
+          const jsonString = Buffer.from(out.Payload).toString('utf8')
+          const parsedData = JSON.parse(jsonString)
+          setFeedbackData(parsedData)
+        } else {
         // Using mock data as fallback
-        setFeedbackData(feedbackData)
+          setFeedbackData(feedbackData)
+        }
+
+        // Using mock data as fallback
+        // setFeedbackData(feedbackData)
       } catch (err) {
         setError('Failed to load feedback. Showing sample data.')
         setFeedbackData(feedbackData)

@@ -8,13 +8,10 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Loader2 } from "lucide-react" // For loading spinner
+import { Loader2 } from 'lucide-react' // For loading spinner
 
-import { CognitoIdentityProviderClient, SignUpCommand } from "@aws-sdk/client-cognito-identity-provider"
-
-// Environment variables for Cognito
-const CLIENT_ID = process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID
-const REGION = process.env.NEXT_PUBLIC_REGION
+// Environment variable for API Gateway URL
+const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || "https://mockapi.example.com/auth"
 
 export default function SignUpPage() {
   const router = useRouter()
@@ -29,9 +26,6 @@ export default function SignUpPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
 
-  // Initialize Cognito Client only if CLIENT_ID and REGION are available
-  const cognitoClient = CLIENT_ID && REGION ? new CognitoIdentityProviderClient({ region: REGION }) : undefined
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value })
     if (message) setMessage("")
@@ -40,34 +34,45 @@ export default function SignUpPage() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 
-    if (!cognitoClient) {
-      setMessage("Cognito client not configured. Check environment variables.")
-      return
-    }
-
     setIsLoading(true)
     setMessage("")
     setIsSuccess(false)
 
-    const signUpCommand = new SignUpCommand({
-      ClientId: CLIENT_ID,
-      Username: form.username,
-      Password: form.password,
-      ClientMetadata: {
-        challenge_question: form.challengeQuestion,
-        challenge_answer: form.challengeAnswer,
-        caesar_key: form.caesarKey,
-      },
-    })
-
     try {
-      const out = await cognitoClient.send(signUpCommand)
-      console.log("SignUpCommand response:", out)
+      // Simulate API Gateway call for SignUp
+      const response = await fetch(`${API_GATEWAY_URL}/signup`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: form.username,
+          password: form.password,
+          clientMetadata: {
+            challenge_question: form.challengeQuestion,
+            challenge_answer: form.challengeAnswer,
+            caesar_key: form.caesarKey,
+          },
+        }),
+      })
 
-      setIsSuccess(true)
-      setMessage("Sign up successful! Please check your email to confirm your account.")
-      // Optionally, redirect to a confirmation page or sign-in page
-      // router.push('/sign-in');
+      const data = await response.json()
+      console.log("API Gateway /signup response:", data)
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to sign up.")
+      }
+
+      if (data.UserConfirmed) {
+        setIsSuccess(true)
+        setMessage("Sign up successful! Your account is confirmed.")
+        // Optionally, redirect to sign-in page or dashboard
+        router.push("/sign-in")
+      } else {
+        // If UserConfirmed is false, it might mean confirmation is pending (e.g., email verification)
+        setIsSuccess(true) // Still a success from the API call perspective
+        setMessage("Sign up successful! Please check your email to confirm your account.")
+      }
     } catch (e: any) {
       setMessage(e.message || "An unknown error occurred during sign-up.")
       setIsSuccess(false)
@@ -186,6 +191,10 @@ export default function SignUpPage() {
             Already have an account?{" "}
             <Link href="/sign-in" className="underline">
               Sign in here
+            </Link>
+            {" | "}
+            <Link href="/operator-dashboard" className="text-sm font-medium hover:underline underline-offset-4">
+              Operator Dashboard
             </Link>
           </div>
         </CardContent>

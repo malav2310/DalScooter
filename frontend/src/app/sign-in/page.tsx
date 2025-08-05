@@ -9,17 +9,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
-import {
-  CognitoIdentityProviderClient,
-  InitiateAuthCommand,
-  RespondToAuthChallengeCommand,
-  type ChallengeNameType,
-} from "@aws-sdk/client-cognito-identity-provider"
-
-// Environment variables for Cognito
-const AUTH_FLOW = "CUSTOM_AUTH" // Or "USER_SRP_AUTH" depending on your Cognito setup
-const CLIENT_ID = process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID
-const REGION = process.env.NEXT_PUBLIC_REGION
+// Environment variable for API Gateway URL
+const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || "https://mockapi.example.com/auth"
 
 export default function SignInPage() {
   const router = useRouter()
@@ -28,7 +19,7 @@ export default function SignInPage() {
   const [message, setMessage] = useState("")
   const [currentChallenge, setCurrentChallenge] = useState<
     | {
-        ChallengeName: ChallengeNameType | undefined
+        ChallengeName: string | undefined
         ChallangeParameters: Record<string, string> | undefined
         Session: string | undefined
       }
@@ -37,72 +28,51 @@ export default function SignInPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
 
-  // Initialize Cognito Client only if CLIENT_ID and REGION are available
-  const cognitoClient = CLIENT_ID && REGION ? new CognitoIdentityProviderClient({ region: REGION }) : undefined
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value })
     if (message) setMessage("")
   }
 
   const startAuth = async () => {
-    if (!cognitoClient) {
-      setMessage("Cognito client not configured. Check environment variables.")
-      return
-    }
-
     setIsLoading(true)
     setMessage("")
     setIsSuccess(false)
 
-    const signInCommand = new InitiateAuthCommand({
-      ClientId: CLIENT_ID,
-      AuthFlow: AUTH_FLOW,
-      AuthParameters: {
-        USERNAME: form.username,
-      },
-    })
-
     try {
-      const initRes = await cognitoClient.send(signInCommand)
-      console.log("InitiateAuthCommand response:", initRes)
+      // Simulate API Gateway call for InitiateAuth
+      const response = await fetch(`${API_GATEWAY_URL}/signin`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: form.username,
+          password: form.password, // Sending password for initial auth, assuming backend handles it
+        }),
+      })
 
-      if (initRes.AuthenticationResult) {
+      const data = await response.json()
+      console.log("API Gateway /signin response:", data)
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to initiate sign-in.")
+      }
+
+      if (data.AuthenticationResult) {
         setIsSuccess(true)
         setMessage("Sign in successful!")
-        // Redirect to a protected page after successful authentication
-        router.push("/") // Change to your desired post-sign-in page
-      } else if (initRes.ChallengeName) {
-        // If there's a challenge, respond to it with the password
-        const firstResponseCommand = new RespondToAuthChallengeCommand({
-          ClientId: CLIENT_ID,
-          ChallengeName: initRes.ChallengeName,
-          Session: initRes.Session,
-          ChallengeResponses: {
-            USERNAME: initRes.ChallengeParameters?.USERNAME || form.username,
-            ANSWER: form.password, // Assuming password is the answer for the first challenge
-          },
-          ClientMetadata: {
-            CLIENT_ID: CLIENT_ID || "", // Ensure CLIENT_ID is a string
-          },
+        router.push("/") // Redirect to a protected page after successful authentication
+      } else if (data.ChallengeName) {
+        // Mocking a challenge response
+        setCurrentChallenge({
+          ChallengeName: data.ChallengeName,
+          ChallangeParameters: data.ChallengeParameters,
+          Session: data.Session,
         })
-
-        const out = await cognitoClient.send(firstResponseCommand)
-        console.log("First RespondToAuthChallengeCommand response:", out)
-
-        if (out.AuthenticationResult) {
-          setIsSuccess(true)
-          setMessage("Sign in successful!")
-          router.push("/") // Change to your desired post-sign-in page
-        } else if (out.ChallengeName) {
-          setCurrentChallenge({
-            ChallengeName: out.ChallengeName,
-            ChallangeParameters: out.ChallengeParameters,
-            Session: out.Session,
-          })
-          setForm({ ...form, answer: "" }) // Clear answer for next challenge
-          setStep(2) // Move to challenge step
-        }
+        setForm({ ...form, answer: "" }) // Clear answer for next challenge
+        setStep(2) // Move to challenge step
+      } else {
+        setMessage("Unexpected response from sign-in API.")
       }
     } catch (e: any) {
       setMessage(e.message || "An unknown error occurred during sign-in.")
@@ -113,8 +83,8 @@ export default function SignInPage() {
   }
 
   const handleChallengeResponse = async () => {
-    if (!cognitoClient || !currentChallenge) {
-      setMessage("Cognito client or challenge not configured.")
+    if (!currentChallenge) {
+      setMessage("No active challenge to respond to.")
       return
     }
 
@@ -122,32 +92,43 @@ export default function SignInPage() {
     setMessage("")
     setIsSuccess(false)
 
-    const challengeRespCommand = new RespondToAuthChallengeCommand({
-      ClientId: CLIENT_ID,
-      ChallengeName: currentChallenge.ChallengeName,
-      Session: currentChallenge.Session,
-      ChallengeResponses: {
-        USERNAME: form.username,
-        ANSWER: form.answer,
-      },
-    })
-
     try {
-      const out = await cognitoClient.send(challengeRespCommand)
-      console.log("Subsequent RespondToAuthChallengeCommand response:", out)
+      // Simulate API Gateway call for RespondToAuthChallenge
+      const response = await fetch(`${API_GATEWAY_URL}/signin-challenge`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: form.username,
+          challengeName: currentChallenge.ChallengeName,
+          session: currentChallenge.Session,
+          answer: form.answer,
+        }),
+      })
 
-      if (out.AuthenticationResult) {
+      const data = await response.json()
+      console.log("API Gateway /signin-challenge response:", data)
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to respond to challenge.")
+      }
+
+      if (data.AuthenticationResult) {
         setIsSuccess(true)
         setMessage("Sign in successful!")
-        router.push("/") // Change to your desired post-sign-in page
-      } else if (out.ChallengeName) {
+        router.push("/") // Redirect to a protected page after successful authentication
+      } else if (data.ChallengeName) {
+        // Another challenge in sequence
         setCurrentChallenge({
-          ChallengeName: out.ChallengeName,
-          ChallangeParameters: out.ChallengeParameters,
-          Session: out.Session,
+          ChallengeName: data.ChallengeName,
+          ChallangeParameters: data.ChallengeParameters,
+          Session: data.Session,
         })
         setForm({ ...form, answer: "" })
         setStep(step + 1) // Move to next challenge step
+      } else {
+        setMessage("Unexpected response from challenge API.")
       }
     } catch (e: any) {
       setMessage(e.message || "An unknown error occurred during challenge response.")
@@ -181,7 +162,7 @@ export default function SignInPage() {
           <CardDescription>
             {step === 1
               ? "Enter your email and password to sign in to your account"
-              : `Respond to challenge: ${currentChallenge?.ChallengeName}`}
+              : `Respond to challenge: ${currentChallenge?.ChallengeName || "Unknown Challenge"}`}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -242,6 +223,11 @@ export default function SignInPage() {
             Don&apos;t have an account?{" "}
             <Link href="/sign-up" className="underline">
               Sign Up
+            </Link>
+          </div>
+          <div className="mt-4 text-center text-sm">
+            <Link href="/operator-dashboard" className="underline">
+              Operator Dashboard
             </Link>
           </div>
         </CardContent>

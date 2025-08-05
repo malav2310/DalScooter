@@ -101,8 +101,9 @@ data "aws_iam_policy_document" "user_role_permissions" {
     # Fill the rest with the permissions to be used with this role
     actions = ["lambda:InvokeFunction"]
     resources = [
-      var.get_feedback_lambda,
-      var.submit_feedback_lambda
+      # var.get_feedback_lambda,
+      # var.submit_feedback_lambda
+      "*"
     ]
   }
 }

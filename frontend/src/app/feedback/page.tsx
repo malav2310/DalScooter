@@ -1,3 +1,5 @@
+"use client"
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Smile, Frown, Meh } from 'lucide-react'
 import Link from "next/link"
@@ -80,7 +82,7 @@ export default function FeedbackPage() {
         })
 
         const getFeedbackCommand = new InvokeCommand({
-          FunctionName: "frontend-test",
+          FunctionName: process.env.NEXT_PUBLIC_GET_FEEDBACK_LAMBDA_NAME,
         })
 
         const out = await lambdaClient.send(getFeedbackCommand)

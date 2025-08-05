@@ -33,6 +33,8 @@ export default function SignUpPage() {
   const [isSuccess, setIsSuccess] = useState(false)
   const [awaitingConfirmation, setAwaitingConfirmation] = useState(false)
 
+  const cognitoClient = new CognitoIdentityProviderClient({ region: REGION })
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value })
     if (message) setMessage("")
@@ -64,48 +66,49 @@ export default function SignUpPage() {
 
     try {
       // Simulate API Gateway call for SignUp
-//       const response = await fetch(`${API_GATEWAY_URL}/signup`, {
-//         method: "POST",
-//         headers: {
-//           "Content-Type": "application/json",
-//         },
-//         body: JSON.stringify({
-//           username: form.username,
-//           password: form.password,
-//           clientMetadata: {
-//             challenge_question: form.challengeQuestion,
-//             challenge_answer: form.challengeAnswer,
-//             caesar_key: form.caesarKey,
-//           },
-//         }),
-//       })
+      //       const response = await fetch(`${API_GATEWAY_URL}/signup`, {
+      //         method: "POST",
+      //         headers: {
+      //           "Content-Type": "application/json",
+      //         },
+      //         body: JSON.stringify({
+      //           username: form.username,
+      //           password: form.password,
+      //           clientMetadata: {
+      //             challenge_question: form.challengeQuestion,
+      //             challenge_answer: form.challengeAnswer,
+      //             caesar_key: form.caesarKey,
+      //           },
+      //         }),
+      //       })
 
-//       const data = await response.json()
-//       console.log("API Gateway /signup response:", data)
-      
+      //       const data = await response.json()
+      //       console.log("API Gateway /signup response:", data)
+
       const out = await cognitoClient.send(signUpCommand)
-
-      setIsSuccess(true)
-      setMessage("Sign up successful! Please check your email to confirm your account.")
-      // Optionally, redirect to a confirmation page or sign-in page
-      router.push('/sign-in');
+      if (out.UserConfirmed) {
+        setIsSuccess(true)
+        setMessage("Sign up successful! Please check your email to confirm your account.")
+        // Optionally, redirect to a confirmation page or sign-in page
+        router.push('/sign-in');
+      }
 
       // Commented out because I reached an attempt limit (?) and couldnt test it anymore
       // setAwaitingConfirmation(true);
-//       if (!response.ok) {
-//         throw new Error(data.message || "Failed to sign up.")
-//       }
+      //       if (!response.ok) {
+      //         throw new Error(data.message || "Failed to sign up.")
+      //       }
 
-//       if (data.UserConfirmed) {
-//         setIsSuccess(true)
-//         setMessage("Sign up successful! Your account is confirmed.")
-//         // Optionally, redirect to sign-in page or dashboard
-//         router.push("/sign-in")
-//       } else {
-//         // If UserConfirmed is false, it might mean confirmation is pending (e.g., email verification)
-//         setIsSuccess(true) // Still a success from the API call perspective
-//         setMessage("Sign up successful! Please check your email to confirm your account.")
-//       }
+      //       if (data.UserConfirmed) {
+      //         setIsSuccess(true)
+      //         setMessage("Sign up successful! Your account is confirmed.")
+      //         // Optionally, redirect to sign-in page or dashboard
+      //         router.push("/sign-in")
+      //       } else {
+      //         // If UserConfirmed is false, it might mean confirmation is pending (e.g., email verification)
+      //         setIsSuccess(true) // Still a success from the API call perspective
+      //         setMessage("Sign up successful! Please check your email to confirm your account.")
+      //       }
     } catch (e: any) {
       setMessage(e.message || "An unknown error occurred during sign-up.")
       setIsSuccess(false)
@@ -116,7 +119,7 @@ export default function SignUpPage() {
 
   const handleConfirmation = async () => {
     setIsLoading(true)
-    
+
     const confirmSignUp = new ConfirmSignUpCommand({
       ClientId: CLIENT_ID,
       Username: form.username,
@@ -156,21 +159,21 @@ export default function SignUpPage() {
         </CardHeader>
         <CardContent>
           {awaitingConfirmation ?
-          <form onSubmit={handleConfirmation} className="grid gap-4">
-            <div className="grid gap-2">
-              <Label>Confirmation Code</Label>
-              <Input
-                id="confirmationCode"
-                name="confirmationCode"
-                type="number"
-                placeholder="Confirmation Code"
-                value={form.confirmationCode}
-                onChange={handleChange}
-                required
-                disabled={isLoading}
-              />
-            </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <form onSubmit={handleConfirmation} className="grid gap-4">
+              <div className="grid gap-2">
+                <Label>Confirmation Code</Label>
+                <Input
+                  id="confirmationCode"
+                  name="confirmationCode"
+                  type="number"
+                  placeholder="Confirmation Code"
+                  value={form.confirmationCode}
+                  onChange={handleChange}
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -180,8 +183,8 @@ export default function SignUpPage() {
                   "Confirm"
                 )}
               </Button>
-          </form>
-          :
+            </form>
+            :
             <form onSubmit={handleSubmit} className="grid gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="username">Username (Email)</Label>

@@ -38,14 +38,14 @@ module "data_visualization_and_analytics" {
 module "notifications" {
   source="./Notifications"
 }
-
+*/
 module "virtual_assistant" {
   source = "./virtual_assistant"
   
   project_name = "dalscooter"  
   environment  = "dev"         
 }
-*/
+
 module "bike_management" {
   source = "./bike_management"
   

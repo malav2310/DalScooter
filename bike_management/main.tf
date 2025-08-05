@@ -1,3 +1,19 @@
+# NEW: Add variables to receive ARNs and names from other modules
+variable "booking_references_table_name" {
+  description = "The name of the DynamoDB table for chatbot booking references."
+  type        = string
+}
+
+variable "booking_references_table_arn" {
+  description = "The ARN of the DynamoDB table for chatbot booking references."
+  type        = string
+}
+
+variable "notification_processor_lambda_arn" {
+  description = "The ARN of the notification processor Lambda function."
+  type        = string
+}
+
 # DynamoDB table for bikes
 resource "aws_dynamodb_table" "bikes" {
   name           = "dalscooter-bikes"
@@ -135,9 +151,15 @@ resource "aws_iam_role_policy" "bike_lambda_policy" {
         Resource = [
           aws_dynamodb_table.bikes.arn,
           aws_dynamodb_table.bookings.arn,
+          var.booking_references_table_arn, # NEW: Permission for chatbot reference table
           "${aws_dynamodb_table.bikes.arn}/index/*",
           "${aws_dynamodb_table.bookings.arn}/index/*"
         ]
+      },
+      {
+        Effect   = "Allow"
+        Action   = "lambda:InvokeFunction"
+        Resource = var.notification_processor_lambda_arn
       }
     ]
   })
@@ -147,10 +169,10 @@ resource "aws_iam_role_policy" "bike_lambda_policy" {
 resource "aws_lambda_function" "get_bikes" {
   filename         = "bike_management/lambda_functions/get_bikes.zip"
   function_name    = "dalscooter-get-bikes"
-  role            = aws_iam_role.bike_lambda_role.arn
-  handler         = "get_bikes.lambda_handler"
-  runtime         = "python3.9"
-  timeout         = 30
+  role             = aws_iam_role.bike_lambda_role.arn
+  handler          = "get_bikes.lambda_handler"
+  runtime          = "python3.9"
+  timeout          = 30
 
   environment {
     variables = {
@@ -165,15 +187,18 @@ resource "aws_lambda_function" "get_bikes" {
 resource "aws_lambda_function" "book_bike" {
   filename         = "bike_management/lambda_functions/book_bike.zip"
   function_name    = "dalscooter-book-bike"
-  role            = aws_iam_role.bike_lambda_role.arn
-  handler         = "book_bike.lambda_handler"
-  runtime         = "python3.9"
-  timeout         = 30
+  role             = aws_iam_role.bike_lambda_role.arn
+  handler          = "book_bike.lambda_handler"
+  runtime          = "python3.9"
+  timeout          = 30
 
   environment {
     variables = {
-      BIKES_TABLE    = aws_dynamodb_table.bikes.name
-      BOOKINGS_TABLE = aws_dynamodb_table.bookings.name
+      BIKES_TABLE                     = aws_dynamodb_table.bikes.name
+      BOOKINGS_TABLE                  = aws_dynamodb_table.bookings.name
+      # NEW: Add environment variables for the updated Lambda code
+      BOOKING_REFERENCES_TABLE        = var.booking_references_table_name
+      NOTIFICATION_PROCESSOR_ARN      = var.notification_processor_lambda_arn
     }
   }
 
@@ -184,10 +209,10 @@ resource "aws_lambda_function" "book_bike" {
 resource "aws_lambda_function" "manage_bikes" {
   filename         = "bike_management/lambda_functions/manage_bikes.zip"
   function_name    = "dalscooter-manage-bikes"
-  role            = aws_iam_role.bike_lambda_role.arn
-  handler         = "manage_bikes.lambda_handler"
-  runtime         = "python3.9"
-  timeout         = 30
+  role             = aws_iam_role.bike_lambda_role.arn
+  handler          = "manage_bikes.lambda_handler"
+  runtime          = "python3.9"
+  timeout          = 30
 
   environment {
     variables = {
@@ -202,10 +227,10 @@ resource "aws_lambda_function" "manage_bikes" {
 resource "aws_lambda_function" "check_availability" {
   filename         = "bike_management/lambda_functions/check_availability.zip"
   function_name    = "dalscooter-check-availability"
-  role            = aws_iam_role.bike_lambda_role.arn
-  handler         = "check_availability.lambda_handler"
-  runtime         = "python3.9"
-  timeout         = 30
+  role             = aws_iam_role.bike_lambda_role.arn
+  handler          = "check_availability.lambda_handler"
+  runtime          = "python3.9"
+  timeout          = 30
 
   environment {
     variables = {

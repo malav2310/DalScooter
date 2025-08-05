@@ -65,3 +65,8 @@ output "lambda_functions" {
     concern_handler   = aws_lambda_function.concern_handler.arn
   }
 }
+
+output "booking_references_table_arn" {
+  description = "The ARN of the DynamoDB booking references table"
+  value       = aws_dynamodb_table.booking_references.arn
+}

@@ -1,0 +1,14 @@
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy to AWS
+    runs-on: self-hosted
+    steps:
+    - uses: actions/checkout@v4
+    - name: Terraform apply
+      run: |
+        terraform apply -auto-approve

@@ -9,6 +9,14 @@ jobs:
     runs-on: self-hosted
     steps:
     - uses: actions/checkout@v4
+    - name: Terraform init
+      run: |
+        terraform init
     - name: Terraform apply
       run: |
         terraform apply -auto-approve
+    - name: Store Terraform state
+      uses: badgerhobbs/terraform-state@v2
+      with:
+        operation: upload
+        location: repository

@@ -10,10 +10,10 @@ import { fromCognitoIdentityPool } from "@aws-sdk/credential-providers"
 // Define TypeScript interface for feedback data
 interface Feedback {
   bike_id: string
-  feedback_id: number
+  id: number
   user_type: string
-  feedback: string
-  sentiment: "Positive" | "Negative" | "Neutral"
+  text: string
+  polarity: "Positive" | "Negative" | "Neutral"
   timestamp: string
 }
 
@@ -87,10 +87,10 @@ export default function FeedbackPage() {
         console.log(out)
 
         // Using mock data as fallback
-        setFeedbackData(mockFeedbackData)
+        setFeedbackData(feedbackData)
       } catch (err) {
         setError('Failed to load feedback. Showing sample data.')
-        setFeedbackData(mockFeedbackData)
+        setFeedbackData(feedbackData)
       } finally {
         setLoading(false)
       }

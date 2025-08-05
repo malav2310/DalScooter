@@ -94,16 +94,16 @@ data "aws_iam_policy_document" "cognito_user_assume_document" {
   }
 }
 
+# Add to this other permissions you wish to grant users
 data "aws_iam_policy_document" "user_role_permissions" {
   statement {
     effect = "Allow"
     # Fill the rest with the permissions to be used with this role
     actions = ["lambda:InvokeFunction"]
-    # resources = [
-    #   # var.get_feedback_lambda,
-    #   # var.submit_feedback_lambda
-    # ]
-    resources = ["*"]
+    resources = [
+      var.get_feedback_lambda,
+      var.submit_feedback_lambda
+    ]
   }
 }
 
@@ -265,30 +265,4 @@ output "user_role_arn" {
 
 output "cognito_identity_id" {
   value = aws_cognito_identity_pool.user_identity_pool.id
-}
-
-# Data source to zip the notification processor Lambda code
-data "archive_file" "frontend_test_lambda_code" {
-  type        = "zip"
-  output_path = "${path.module}/test_lambda.zip"
-
-  source {
-    content  = <<EOF
-    def lambda_handler(event, context):
-      print("hello, world!")
-
-    EOF
-    filename = "index.py"
-  }
-}
-
-resource "aws_lambda_function" "sqs_notification_processor" {
-  function_name = "frontend-test"
-  runtime       = "python3.9"
-  handler       = "index.lambda_handler"
-  role          = aws_iam_role.lambda_exec_role.arn
-  timeout       = 30
-
-  filename         = data.archive_file.frontend_test_lambda_code.output_path
-  source_code_hash = data.archive_file.frontend_test_lambda_code.output_base64sha256
 }

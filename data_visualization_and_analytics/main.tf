@@ -103,18 +103,18 @@ resource "aws_iam_role_policy_attachment" "lambda_logs_attach" {
   policy_arn = aws_iam_policy.lambda_logs_policy.arn
 }
 
-# Zip Lambda Files
-data "archive_file" "submit_feedback_zip" {
-  type        = "zip"
-  output_path = "${path.module}/submit_feedback.zip"
-  source_file = "${path.module}/submit_feedback.py"
-}
+# # Zip Lambda Files
+# data "archive_file" "submit_feedback_zip" {
+#   type        = "zip"
+#   output_path = "${path.module}/submit_feedback.zip"
+#   source_file = "${path.module}/submit_feedback.py"
+# }
 
-data "archive_file" "get_feedback_zip" {
-  type        = "zip"
-  output_path = "${path.module}/get_feedback.zip"
-  source_file = "${path.module}/get_feedback.py"
-}
+# data "archive_file" "get_feedback_zip" {
+#   type        = "zip"
+#   output_path = "${path.module}/get_feedback.zip"
+#   source_file = "${path.module}/get_feedback.py"
+# }
 
 # Lambda - Submit Feedback
 resource "aws_lambda_function" "submit_feedback" {

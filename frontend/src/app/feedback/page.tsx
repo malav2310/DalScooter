@@ -1,7 +1,21 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Smile, Frown, Meh } from 'lucide-react'
 import Link from "next/link"
-import { Bike } from 'lucide-react'
+import { Bike } from "lucide-react"
+import { useState, useEffect } from "react"
+import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda"
+import { fromWebToken } from "@aws-sdk/credential-providers"
+import { fromCognitoIdentityPool } from "@aws-sdk/credential-providers"
+
+// Define TypeScript interface for feedback data
+interface Feedback {
+  bike_id: string
+  feedback_id: number
+  user_type: string
+  feedback: string
+  sentiment: "Positive" | "Negative" | "Neutral"
+  timestamp: string
+}
 
 // Dummy feedback data
 const feedbackData = [
@@ -38,6 +52,53 @@ const feedbackData = [
 ]
 
 export default function FeedbackPage() {
+  const [feedbackData, setFeedbackData] = useState<Feedback[]>([])
+  const [loading, setLoading] = useState<boolean>(true)
+  const [error, setError] = useState<string | null>(null)
+  const [webToken, setWebToken] = useState<string | null>(null)
+
+  // Simulate API fetch (replace with actual API URL when available)
+  useEffect(() => {
+    const fetchFeedback = async () => {
+      try {
+        // Placeholder for actual API fetch
+        // const response = await fetch('YOUR_API_GATEWAY_URL')
+        // if (!response.ok) throw new Error('Failed to fetch feedback')
+        // const data: Feedback[] = await response.json()
+        // setFeedbackData(data)
+
+        const idToken = sessionStorage.getItem("idToken")
+
+        const lambdaClient = new LambdaClient({
+          region: process.env.NEXT_PUBLIC_REGION, credentials: fromCognitoIdentityPool({
+            clientConfig: { region: process.env.NEXT_PUBLIC_REGION },
+            identityPoolId: process.env.NEXT_PUBLIC_IDENTITY_ID!!,
+            logins: {
+              [`cognito-idp.${process.env.NEXT_PUBLIC_REGION}.amazonaws.com/${process.env.NEXT_PUBLIC_USER_POOL_ID!!}`]: idToken!!
+            }
+          })
+        })
+
+        const getFeedbackCommand = new InvokeCommand({
+          FunctionName: "frontend-test",
+        })
+
+        const out = await lambdaClient.send(getFeedbackCommand)
+        console.log(out)
+
+        // Using mock data as fallback
+        setFeedbackData(mockFeedbackData)
+      } catch (err) {
+        setError('Failed to load feedback. Showing sample data.')
+        setFeedbackData(mockFeedbackData)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchFeedback()
+  }, [])
+
   const getPolarityIcon = (polarity: string) => {
     switch (polarity) {
       case "Positive":

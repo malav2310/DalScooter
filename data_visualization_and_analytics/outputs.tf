@@ -11,6 +11,14 @@ output "get_feedback_lambda" {
   value = aws_lambda_function.get_feedback.arn
 }
 
+output "submit_feedback_lambda_name" {
+  value = aws_lambda_function.submit_feedback.function_name
+}
+
+output "get_feedback_lambda_name" {
+  value = aws_lambda_function.get_feedback.function_name
+}
+
 output "lambda_execution_role_arn" {
   value       = aws_iam_role.lambda_execution_role.arn
   description = "ARN of the Lambda execution role"

@@ -9,6 +9,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
+import {
+  CognitoIdentityProviderClient,
+  InitiateAuthCommand,
+  RespondToAuthChallengeCommand,
+  type ChallengeNameType,
+} from "@aws-sdk/client-cognito-identity-provider"
+
+import { CognitoIdentityClient, GetCredentialsForIdentityCommand } from "@aws-sdk/client-cognito-identity"
+
+// Environment variables for Cognito
+const AUTH_FLOW = "CUSTOM_AUTH" // Or "USER_SRP_AUTH" depending on your Cognito setup
+const CLIENT_ID = process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID
+const REGION = process.env.NEXT_PUBLIC_REGION
+
 // Environment variable for API Gateway URL
 const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || "https://mockapi.example.com/auth"
 
@@ -114,12 +128,14 @@ export default function SignInPage() {
         throw new Error(data.message || "Failed to respond to challenge.")
       }
 
-      if (data.AuthenticationResult) {
+      if (out.AuthenticationResult?.IdToken) {
         setIsSuccess(true)
         setMessage("Sign in successful!")
-        router.push("/") // Redirect to a protected page after successful authentication
-      } else if (data.ChallengeName) {
-        // Another challenge in sequence
+
+        sessionStorage.setItem("idToken", out.AuthenticationResult.IdToken)
+
+        router.push("/feedback") // Change to your desired post-sign-in page
+      } else if (out.ChallengeName) {
         setCurrentChallenge({
           ChallengeName: data.ChallengeName,
           ChallangeParameters: data.ChallengeParameters,
@@ -162,7 +178,7 @@ export default function SignInPage() {
           <CardDescription>
             {step === 1
               ? "Enter your email and password to sign in to your account"
-              : `Respond to challenge: ${currentChallenge?.ChallengeName || "Unknown Challenge"}`}
+              : `${currentChallenge?.ChallangeParameters?.prompt} ${currentChallenge?.ChallangeParameters?.question}`}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -210,9 +226,9 @@ export default function SignInPage() {
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Loading..." : step === 1 ? "Sign In" : "Submit Challenge"}
             </Button>
-            <Button variant="outline" className="w-full bg-transparent">
+            {/* <Button variant="outline" className="w-full bg-transparent">
               Sign In with Google
-            </Button>
+            </Button> */}
           </form>
           {message && (
             <div className={`mt-4 text-center text-sm ${isSuccess ? "text-green-600" : "text-red-600"}`} role="alert">

@@ -1,7 +1,5 @@
-"use client"
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Smile, Frown, Meh } from "lucide-react"
+import { Smile, Frown, Meh } from 'lucide-react'
 import Link from "next/link"
 import { Bike } from "lucide-react"
 import { useState, useEffect } from "react"
@@ -19,55 +17,37 @@ interface Feedback {
   timestamp: string
 }
 
-// Mock feedback data (used as fallback)
-const mockFeedbackData: Feedback[] = [
+// Dummy feedback data
+const feedbackData = [
   {
-    bike_id: "EB001",
-    feedback_id: 1,
-    user_type: "Customer",
-    feedback: "The eBikes were fantastic! Smooth ride and great battery life.",
-    sentiment: "Positive",
-    timestamp: "2025-08-01T10:30:00Z",
+    id: 1,
+    text: "The eBikes were fantastic! Smooth ride and great battery life.",
+    polarity: "Positive",
   },
   {
-    bike_id: "GS002",
-    feedback_id: 2,
-    user_type: "Customer",
-    feedback: "Gyroscooter was a bit tricky to get used to, but fun once I got the hang of it.",
-    sentiment: "Neutral",
-    timestamp: "2025-08-02T14:15:00Z",
+    id: 2,
+    text: "Gyroscooter was a bit tricky to get used to, but fun once I got the hang of it.",
+    polarity: "Neutral",
   },
   {
-    bike_id: "SG003",
-    feedback_id: 3,
-    user_type: "Customer",
-    feedback: "Segway was out of stock, which was disappointing. Please update availability.",
-    sentiment: "Negative",
-    timestamp: "2025-08-03T09:00:00Z",
+    id: 3,
+    text: "Segway was out of stock, which was disappointing. Please update availability.",
+    polarity: "Negative",
   },
   {
-    bike_id: "EB004",
-    feedback_id: 4,
-    user_type: "Customer",
-    feedback: "Excellent service and very friendly staff. Highly recommend!",
-    sentiment: "Positive",
-    timestamp: "2025-08-03T16:45:00Z",
+    id: 4,
+    text: "Excellent service and very friendly staff. Highly recommend!",
+    polarity: "Positive",
   },
   {
-    bike_id: "EB005",
-    feedback_id: 5,
-    user_type: "Customer",
-    feedback: "The tariff for eBikes seems a bit high compared to other services.",
-    sentiment: "Negative",
-    timestamp: "2025-08-04T11:20:00Z",
+    id: 5,
+    text: "The tariff for eBikes seems a bit high compared to other services.",
+    polarity: "Negative",
   },
   {
-    bike_id: "EB006",
-    feedback_id: 6,
-    user_type: "Customer",
-    feedback: "Had a minor issue with the booking system, but it was resolved quickly.",
-    sentiment: "Neutral",
-    timestamp: "2025-08-04T13:10:00Z",
+    id: 6,
+    text: "Had a minor issue with the booking system, but it was resolved quickly.",
+    polarity: "Neutral",
   },
 ]
 
@@ -119,8 +99,8 @@ export default function FeedbackPage() {
     fetchFeedback()
   }, [])
 
-  const getPolarityIcon = (sentiment: Feedback["sentiment"]) => {
-    switch (sentiment) {
+  const getPolarityIcon = (polarity: string) => {
+    switch (polarity) {
       case "Positive":
         return <Smile className="h-5 w-5 text-green-500" />
       case "Negative":
@@ -132,8 +112,8 @@ export default function FeedbackPage() {
     }
   }
 
-  const getPolarityColor = (sentiment: Feedback["sentiment"]) => {
-    switch (sentiment) {
+  const getPolarityColor = (polarity: string) => {
+    switch (polarity) {
       case "Positive":
         return "text-green-600"
       case "Negative":
@@ -162,6 +142,9 @@ export default function FeedbackPage() {
           <Link href="/feedback" className="text-sm font-medium hover:underline underline-offset-4">
             Feedback
           </Link>
+          <Link href="/operator-dashboard" className="text-sm font-medium hover:underline underline-offset-4">
+            Operator Dashboard
+          </Link>
           <Link href="#" className="text-sm font-medium hover:underline underline-offset-4">
             About
           </Link>
@@ -180,34 +163,24 @@ export default function FeedbackPage() {
             </p>
           </div>
 
-          {loading && <p className="text-center">Loading feedback...</p>}
-          {error && <p className="text-center text-red-600">{error}</p>}
-
-          {!loading && (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {feedbackData.map((feedback) => (
-                <Card key={feedback.feedback_id} className="flex flex-col">
-                  <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <CardTitle className="text-lg font-semibold">
-                      Feedback #{feedback.feedback_id} (Bike: {feedback.bike_id})
-                    </CardTitle>
-                    <div className="flex items-center gap-2">
-                      {getPolarityIcon(feedback.sentiment)}
-                      <span className={`text-sm font-medium ${getPolarityColor(feedback.sentiment)}`}>
-                        {feedback.sentiment}
-                      </span>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="flex-1">
-                    <p className="text-gray-700 dark:text-gray-300">{feedback.feedback}</p>
-                    <p className="text-sm text-gray-500 mt-2">
-                      By: {feedback.user_type} | {new Date(feedback.timestamp).toLocaleDateString()}
-                    </p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {feedbackData.map((feedback) => (
+              <Card key={feedback.id} className="flex flex-col">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-lg font-semibold">Feedback #{feedback.id}</CardTitle>
+                  <div className="flex items-center gap-2">
+                    {getPolarityIcon(feedback.polarity)}
+                    <span className={`text-sm font-medium ${getPolarityColor(feedback.polarity)}`}>
+                      {feedback.polarity}
+                    </span>
+                  </div>
+                </CardHeader>
+                <CardContent className="flex-1">
+                  <p className="text-gray-700 dark:text-gray-300">{feedback.text}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       </main>
 

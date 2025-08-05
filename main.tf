@@ -10,7 +10,7 @@ terraform {
 provider "aws" {
   region = "us-east-1"
 }
-
+/*
 module "cognito" {
   source = "./cognito"
 
@@ -35,11 +35,12 @@ module "data_visualization_and_analytics" {
 
   project_name = "dalscooter"
 }
-
+*/
+/*
 module "notifications" {
   source = "./Notifications"
 }
-
+*/
 module "virtual_assistant" {
   source = "./virtual_assistant"
 

@@ -19,16 +19,15 @@ module "cognito" {
   get_feedback_lambda    = module.data_visualization_and_analytics.get_feedback_lambda
 }
 
+module "message_passing" {
+  source = "./message_passing"
+}
 
-# module "message_passing" {
-#   source = "./message_passing"
-# }
+module "data_visualization_and_analytics" {
+  source = "./data_visualization_and_analytics"
 
-# module "data_visualization_and_analytics" {
-#   source = "./data_visualization_and_analytics"
-
-#   project_name = "dalscooter"
-# }
+  project_name = "dalscooter"
+}
 
 module "notifications" {
    source = "./Notifications"
@@ -39,6 +38,10 @@ module "virtual_assistant" {
 
   project_name = "dalscooter"
   environment  = "dev"
+  
+  # Pass message passing module outputs
+  feedback_sns_topic_arn = module.message_passing.feedback_sns_topic_arn
+  feedback_lambda_arn    = module.message_passing.feedback_lambda_function_arn
 }
 
 module "bike_management" {
@@ -62,4 +65,3 @@ module "frontend" {
   cognito_identity_id         = module.cognito.cognito_identity_id
   cognito_user_pool_id        = module.cognito.cognito_user_pool_id
 }
-

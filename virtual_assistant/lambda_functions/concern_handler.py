@@ -9,7 +9,13 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 dynamodb = boto3.resource('dynamodb')
+sns_client = boto3.client('sns')
+lambda_client = boto3.client('lambda')
+
 table_name = os.environ['CUSTOMER_CONCERNS_TABLE']
+feedback_sns_topic_arn = os.environ['FEEDBACK_SNS_TOPIC_ARN']
+feedback_lambda_arn = os.environ['FEEDBACK_LAMBDA_ARN']
+
 table = dynamodb.Table(table_name)
 
 def handler(event, context):
@@ -89,12 +95,14 @@ def handler(event, context):
 
 def create_concern_ticket(booking_reference, issue_description):
     """
-    Create a new concern ticket in DynamoDB
+    Create a new concern ticket in DynamoDB and forward to operators
     """
     try:
         # Generate unique concern ID
         concern_id = str(uuid.uuid4())
         timestamp = datetime.utcnow().isoformat()
+        priority = determine_priority(issue_description)
+        category = determine_category(issue_description)
         
         # Create concern item
         concern_item = {
@@ -104,12 +112,16 @@ def create_concern_ticket(booking_reference, issue_description):
             'status': 'open',
             'created_at': timestamp,
             'updated_at': timestamp,
-            'priority': determine_priority(issue_description),
-            'category': determine_category(issue_description)
+            'priority': priority,
+            'category': category
         }
         
         # Save to DynamoDB
         table.put_item(Item=concern_item)
+        logger.info(f"Created concern ticket: {concern_id} for booking: {booking_reference}")
+        
+        # Forward concern to operators via SNS
+        forward_concern_to_operators(concern_id, booking_reference, issue_description, priority, category)
         
         # Prepare response message
         message = f"""🎫 **Issue Ticket Created Successfully**
@@ -118,7 +130,7 @@ def create_concern_ticket(booking_reference, issue_description):
 🔖 **Booking Reference:** {booking_reference}
 📝 **Issue:** {issue_description}
 📊 **Status:** Open
-⚡ **Priority:** {concern_item['priority'].title()}
+⚡ **Priority:** {priority.title()}
 
 **What happens next:**
 ✅ Your concern has been logged and forwarded to our franchise operators
@@ -131,12 +143,57 @@ def create_concern_ticket(booking_reference, issue_description):
 
 Thank you for reporting this issue. We'll resolve it as quickly as possible!"""
 
-        logger.info(f"Created concern ticket: {concern_id} for booking: {booking_reference}")
         return message
         
     except Exception as e:
         logger.error(f"Error creating concern ticket: {str(e)}")
         return f"I'm sorry, I couldn't create a ticket for your concern at this time. Please try again or contact our support team directly with booking reference {booking_reference} and describe your issue: '{issue_description}'"
+
+def forward_concern_to_operators(concern_id, booking_reference, issue_description, priority, category):
+    """
+    Forward concern to operators via SNS
+    """
+    try:
+        # Prepare message for operators
+        message_body = f"""
+🚨 NEW CUSTOMER CONCERN REPORTED
+
+📋 Concern ID: {concern_id}
+🔖 Booking Reference: {booking_reference}
+📝 Issue Description: {issue_description}
+⚡ Priority: {priority.upper()}
+🏷️ Category: {category.title()}
+🕐 Reported At: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')}
+
+Please investigate and respond accordingly.
+        """.strip()
+        
+        # Publish to SNS topic
+        response = sns_client.publish(
+            TopicArn=feedback_sns_topic_arn,
+            Message=message_body,
+            Subject=f"[{priority.upper()}] Customer Concern - {booking_reference}",
+            MessageAttributes={
+                'referenceCode': {
+                    'DataType': 'String',
+                    'StringValue': concern_id
+                },
+                'priority': {
+                    'DataType': 'String',
+                    'StringValue': priority
+                },
+                'category': {
+                    'DataType': 'String',
+                    'StringValue': category
+                }
+            }
+        )
+        
+        logger.info(f"Successfully forwarded concern {concern_id} to operators via SNS. MessageId: {response.get('MessageId')}")
+        
+    except Exception as e:
+        logger.error(f"Error forwarding concern {concern_id} to operators: {str(e)}")
+        # Don't raise the error as the ticket was still created successfully
 
 def determine_priority(issue_description):
     """

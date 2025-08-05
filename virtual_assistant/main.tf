@@ -346,6 +346,9 @@ def handle_concern(event, context):
         # Save to DynamoDB
         table.put_item(Item=concern_item)
         
+        # Forward concern to operators via SNS
+        forward_concern_to_operators(concern_id, booking_reference, issue_description, priority, category)
+        
         message = f"""🎫 **Issue Ticket Created Successfully**
 
 📋 **Ticket ID:** {concern_id[:8]}...
@@ -370,6 +373,53 @@ Thank you for reporting this issue. We'll resolve it as quickly as possible!"""
     except Exception as e:
         logger.error(f"Concern handler error: {str(e)}")
         return error_response('ConcernIntent')
+
+def forward_concern_to_operators(concern_id, booking_reference, issue_description, priority, category):
+    """Forward concern to operators via SNS"""
+    try:
+        # Import SNS client
+        sns_client = boto3.client('sns')
+        
+        # Prepare message for operators
+        message_body = f"""
+🚨 NEW CUSTOMER CONCERN REPORTED
+
+📋 Concern ID: {concern_id}
+🔖 Booking Reference: {booking_reference or 'Not provided'}
+📝 Issue Description: {issue_description}
+⚡ Priority: {priority.upper()}
+🏷️ Category: {category.title()}
+🕐 Reported At: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')}
+
+Please investigate and respond accordingly.
+        """.strip()
+        
+        # Publish to SNS topic
+        response = sns_client.publish(
+            TopicArn=os.environ['FEEDBACK_SNS_TOPIC_ARN'],
+            Message=message_body,
+            Subject=f"[{priority.upper()}] Customer Concern - {booking_reference or concern_id[:8]}",
+            MessageAttributes={
+                'referenceCode': {
+                    'DataType': 'String',
+                    'StringValue': concern_id
+                },
+                'priority': {
+                    'DataType': 'String',
+                    'StringValue': priority
+                },
+                'category': {
+                    'DataType': 'String',
+                    'StringValue': category
+                }
+            }
+        )
+        
+        logger.info(f"Successfully forwarded concern {concern_id} to operators via SNS. MessageId: {response.get('MessageId')}")
+        
+    except Exception as e:
+        logger.error(f"Error forwarding concern {concern_id} to operators: {str(e)}")
+        # Don't raise the error as the ticket was still created successfully
 
 def determine_priority(issue_description):
     """Determine priority based on issue description"""
@@ -570,7 +620,7 @@ resource "aws_iam_role" "lambda_role" {
   }
 }
 
-# IAM policy for Lambda functions
+# IAM policy for Lambda functions - UPDATED WITH NEW PERMISSIONS
 resource "aws_iam_role_policy" "lambda_policy" {
   name = "${var.project_name}-${var.environment}-virtual-assistant-lambda-policy"
   role = aws_iam_role.lambda_role.id
@@ -613,6 +663,26 @@ resource "aws_iam_role_policy" "lambda_policy" {
         ]
         Resource = [
           "arn:aws:lex:*:*:bot-alias/${aws_lexv2models_bot.dalscooter_bot.id}/*"
+        ]
+      },
+      # NEW: SNS permissions for forwarding concerns
+      {
+        Effect = "Allow"
+        Action = [
+          "sns:Publish"
+        ]
+        Resource = [
+          var.feedback_sns_topic_arn
+        ]
+      },
+      # NEW: Lambda invoke permissions for message passing
+      {
+        Effect = "Allow"
+        Action = [
+          "lambda:InvokeFunction"
+        ]
+        Resource = [
+          var.feedback_lambda_arn
         ]
       }
     ]
@@ -664,6 +734,7 @@ resource "aws_lambda_function" "booking_handler" {
   }
 }
 
+# UPDATED: Concern handler with new environment variables
 resource "aws_lambda_function" "concern_handler" {
   filename         = data.archive_file.concern_handler_zip.output_path
   function_name    = "${var.project_name}-${var.environment}-concern-handler"
@@ -676,6 +747,9 @@ resource "aws_lambda_function" "concern_handler" {
   environment {
     variables = {
       CUSTOMER_CONCERNS_TABLE = aws_dynamodb_table.customer_concerns.name
+      # NEW: Add message passing variables
+      FEEDBACK_SNS_TOPIC_ARN = var.feedback_sns_topic_arn
+      FEEDBACK_LAMBDA_ARN    = var.feedback_lambda_arn
     }
   }
 
@@ -686,7 +760,7 @@ resource "aws_lambda_function" "concern_handler" {
   }
 }
 
-# Router Lambda function (main function for Lex)
+# UPDATED: Router Lambda function (main function for Lex) with new environment variables
 resource "aws_lambda_function" "router_handler" {
   filename         = data.archive_file.router_handler_zip.output_path
   function_name    = "${var.project_name}-${var.environment}-router-handler"
@@ -701,6 +775,9 @@ resource "aws_lambda_function" "router_handler" {
       KNOWLEDGE_BASE_TABLE = aws_dynamodb_table.bot_knowledge_base.name
       BOOKING_REFERENCES_TABLE = aws_dynamodb_table.booking_references.name
       CUSTOMER_CONCERNS_TABLE = aws_dynamodb_table.customer_concerns.name
+      # NEW: Add message passing variables
+      FEEDBACK_SNS_TOPIC_ARN = var.feedback_sns_topic_arn
+      FEEDBACK_LAMBDA_ARN    = var.feedback_lambda_arn
     }
   }
 

@@ -9,3 +9,13 @@ variable "environment" {
   description = "Environment (dev, staging, prod)"
   type        = string
 }
+
+variable "feedback_sns_topic_arn" {
+  description = "ARN of the SNS topic for forwarding concerns"
+  type        = string
+}
+
+variable "feedback_lambda_arn" {
+  description = "ARN of the feedback lambda function"
+  type        = string
+}

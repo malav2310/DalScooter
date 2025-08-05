@@ -1,14 +1,15 @@
-import Link from "next/link"
-import { Bike } from 'lucide-react'
-import { BikeList } from "@/components/bike-list"
-import { BikeManagement } from "@/components/bike-management"
-import { IssueTicketManagement } from "@/components/issue-ticket-management"
+import Link from "next/link";
+import { Bike } from "lucide-react";
+import { BikeList } from "@/components/bike-list";
+import { BikeManagement } from "@/components/bike-management";
+import { IssueTicketManagement } from "@/components/issue-ticket-management";
+import { Button } from "@/components/ui/button";
 
 export default function OperatorDashboardPage() {
   return (
     <div className="flex flex-col min-h-[100dvh]">
       <header className="px-4 lg:px-6 h-14 flex items-center border-b">
-        <Link href="/" className="flex items-center justify-center gap-2">
+        <Link href="/dashboard-operator" className="flex items-center justify-center gap-2">
           <Bike className="h-6 w-6" />
           <span className="text-lg font-semibold">Bike Rentals</span>
         </Link>
@@ -22,6 +23,9 @@ export default function OperatorDashboardPage() {
           <Link href="#" className="text-sm font-medium hover:underline underline-offset-4">
             Contact
           </Link>
+          <Button asChild size="sm" className="ml-4">
+            <Link href="/looker-dashboard">View Analytics</Link>
+          </Button>
         </nav>
       </header>
 
@@ -40,7 +44,6 @@ export default function OperatorDashboardPage() {
         <BikeManagement />
         <IssueTicketManagement />
 
-        {/* Guest Features for Operators */}
         <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-center mt-12 mb-8">
           General Information
         </h2>
@@ -61,5 +64,5 @@ export default function OperatorDashboardPage() {
         </nav>
       </footer>
     </div>
-  )
+  );
 }

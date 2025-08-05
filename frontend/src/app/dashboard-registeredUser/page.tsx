@@ -102,7 +102,7 @@ export default function DashboardPage() {
   return (
     <div className="flex flex-col min-h-[100dvh]">
       <header className="px-4 lg:px-6 h-14 flex items-center border-b">
-        <Link href="/" className="flex items-center justify-center gap-2">
+        <Link href="/dashboard-registeredUser" className="flex items-center justify-center gap-2">
           <Bike className="h-6 w-6" />
           <span className="text-lg font-semibold">Bike Rentals</span>
         </Link>

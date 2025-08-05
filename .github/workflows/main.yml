@@ -20,7 +20,9 @@ jobs:
       run: |
         terraform apply -auto-approve
     - name: Store Terraform state
-      uses: badgerhobbs/terraform-state@v2
-      with:
-        operation: upload
-        location: repository
+      run: |
+        git checkout -b tfstate
+        git add ./terraform.tfstate -f
+        git config user.name "TFState"
+        git commit -m "Updating TFState"
+        git push -u origin tfstate

@@ -10,7 +10,7 @@ terraform {
 provider "aws" {
   region = "us-east-1"
 }
-/*
+
 module "cognito" {
   source = "./cognito"
 
@@ -18,7 +18,7 @@ module "cognito" {
   submit_feedback_lambda = module.data_visualization_and_analytics.submit_feedback_lambda
   get_feedback_lambda    = module.data_visualization_and_analytics.get_feedback_lambda
 }
-*/
+
 
 # module "message_passing" {
 #   source = "./message_passing"
@@ -50,7 +50,7 @@ module "bike_management" {
    booking_references_table_arn    = module.virtual_assistant.booking_references_table_arn
    notification_processor_lambda_arn = module.notifications.notification_processor_function_arn
 }
-/*
+
 module "frontend" {
   source = "./frontend"
 
@@ -62,4 +62,4 @@ module "frontend" {
   cognito_identity_id         = module.cognito.cognito_identity_id
   cognito_user_pool_id        = module.cognito.cognito_user_pool_id
 }
-*/
+

@@ -42,14 +42,3 @@ data "external" "set_environment" {
   working_dir = "${path.module}/"
 }
 
-data "external" "build_next" {
-  depends_on = [ data.external.set_environment ]
-  program=["bash", "-c", <<EOF
-  echo ${data.external.set_environment.id} >&2 /dev/null
-  npm run build >&2 && echo "{\"build\": \".next\"}"
-  EOF
-  ]
-
-  working_dir = "${path.module}/"
-}
-

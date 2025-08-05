@@ -3,7 +3,7 @@ import { Bike } from "lucide-react";
 
 export default function LookerDashboardPage() {
   // Updated Looker Studio embed URL
-  const lookerStudioEmbedUrl = "https://lookerstudio.google.com/embed/reporting/016a4930-4122-43b9-9507-9298a3bf2e46/page/NicTF";
+  const lookerStudioEmbedUrl = "https://lookerstudio.google.com/embed/reporting/ba6405ae-d5dc-448d-8921-84bb1f8db83d/page/STdTF";
 
   return (
     <div className="flex flex-col min-h-[100dvh]">

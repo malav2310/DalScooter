@@ -91,6 +91,7 @@ export default function FeedbackPage() {
         if (out.Payload) {
           const jsonString = Buffer.from(out.Payload).toString('utf8')
           const parsedData = JSON.parse(jsonString)
+          console.log(parsedData)
           setFeedbackData(parsedData)
         } else {
         // Using mock data as fallback

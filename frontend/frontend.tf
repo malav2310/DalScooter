@@ -26,6 +26,10 @@ variable "submit_feedback_lambda_name" {
   type = string
 }
 
+variable "chatbot_api_gateway_url" {
+  type = string
+}
+
 data "external" "set_environment" {
   program = ["bash", "-c", <<EOF
   echo NEXT_PUBLIC_REGION = \'${var.region}\' > .env
@@ -35,6 +39,7 @@ data "external" "set_environment" {
   echo NEXT_PUBLIC_USER_ROLE_ARN = \'${var.user_role_arn}\' >> .env
   echo NEXT_PUBLIC_IDENTITY_ID = \'${var.cognito_identity_id}\' >> .env
   echo NEXT_PUBLIC_USER_POOL_ID = \'${var.cognito_user_pool_id}\' >> .env
+  echo NEXT_PUBLIC_CHATBOT_API_GATEWAY_URL = \'${var.chatbot_api_gateway_url}\' >> .env
   echo "{\"status\": \"ok\"}"
   EOF
   ]

@@ -57,18 +57,11 @@ export default function FeedbackPage() {
   const [feedbackData, setFeedbackData] = useState<Feedback[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
-  const [webToken, setWebToken] = useState<string | null>(null)
 
   // Simulate API fetch (replace with actual API URL when available)
   useEffect(() => {
     const fetchFeedback = async () => {
       try {
-        // Placeholder for actual API fetch
-        // const response = await fetch('YOUR_API_GATEWAY_URL')
-        // if (!response.ok) throw new Error('Failed to fetch feedback')
-        // const data: Feedback[] = await response.json()
-        // setFeedbackData(data)
-
         const idToken = sessionStorage.getItem("idToken")
 
         const lambdaClient = new LambdaClient({
@@ -92,14 +85,14 @@ export default function FeedbackPage() {
           const jsonString = Buffer.from(out.Payload).toString('utf8')
           const parsedData = JSON.parse(jsonString)
           console.log(parsedData)
-          // setFeedbackData(parsedData)
+          setFeedbackData(parsedData)
         } else {
         // Using mock data as fallback
-          // setFeedbackData(feedbackData)
+          setFeedbackData(feedbackData)
         }
 
         // Using mock data as fallback
-        setFeedbackData(feedbackData)
+        // setFeedbackData(feedbackData)
       } catch (err) {
         setError('Failed to load feedback. Showing sample data.')
         setFeedbackData(feedbackData)

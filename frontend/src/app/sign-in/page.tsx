@@ -234,9 +234,6 @@ export default function SignInPage() {
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Loading..." : step === 1 ? "Sign In" : "Submit Challenge"}
             </Button>
-            {/* <Button variant="outline" className="w-full bg-transparent">
-              Sign In with Google
-            </Button> */}
           </form>
           {message && (
             <div className={`mt-4 text-center text-sm ${isSuccess ? "text-green-600" : "text-red-600"}`} role="alert">

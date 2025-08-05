@@ -92,6 +92,9 @@ export default function DashboardPage() {
       alert("Please select vehicle type and write comments.")
       return
     }
+
+    
+
     console.log("Feedback submitted:", feedbackForm)
     setFeedbackSubmitted(true)
     setFeedbackForm({ vehicleType: "", comments: "", rating: 0 })

@@ -91,12 +91,6 @@ data "aws_iam_policy_document" "cognito_user_assume_document" {
 
       values = [aws_cognito_identity_pool.user_identity_pool.id]
     }
-    condition {
-      test     = "ForAnyValue:StringLike"
-      variable = "cognito-identity.amazonaws.com:amr"
-
-      values = ["authenticated"]
-    }
   }
 }
 
@@ -105,15 +99,17 @@ data "aws_iam_policy_document" "user_role_permissions" {
     effect = "Allow"
     # Fill the rest with the permissions to be used with this role
     actions = ["lambda:InvokeFunction"]
-    resources = [
-      var.get_feedback_lambda,
-      var.submit_feedback_lambda
-    ]
+    # resources = [
+    #   # var.get_feedback_lambda,
+    #   # var.submit_feedback_lambda
+    # ]
+    resources = ["*"]
   }
 }
 
 resource "aws_cognito_user_pool" "cognito_user_pool" {
   name = "CognitoUserPool"
+  # auto_verified_attributes = ["email"]
   lambda_config {
     define_auth_challenge          = aws_lambda_function.define_auth_lambda.arn
     create_auth_challenge          = aws_lambda_function.create_auth_lambda.arn
@@ -136,7 +132,7 @@ resource "aws_cognito_identity_pool" "user_identity_pool" {
 
   cognito_identity_providers {
     client_id               = aws_cognito_user_pool_client.user_pool_client.id
-    provider_name           = "cognito-idp.${var.aws_region}.amazonaws.com/${aws_cognito_user_pool.cognito_user_pool.id}"
+    provider_name           = aws_cognito_user_pool.cognito_user_pool.endpoint
     server_side_token_check = true
   }
 }
@@ -152,8 +148,25 @@ resource "aws_dynamodb_table" "challenge_table" {
 }
 
 resource "aws_iam_role" "user_role" {
-  name = "UserRole"
+  name               = "UserRole"
   assume_role_policy = data.aws_iam_policy_document.cognito_user_assume_document.json
+}
+
+resource "aws_iam_policy" "user_role_policy" {
+  name   = "UserRolePolicy"
+  policy = data.aws_iam_policy_document.user_role_permissions.json
+}
+
+resource "aws_iam_role_policy_attachment" "user_role_policy_attachment" {
+  role       = aws_iam_role.user_role.name
+  policy_arn = aws_iam_policy.user_role_policy.arn
+}
+
+resource "aws_cognito_identity_pool_roles_attachment" "user_role_identity_pool_attachment" {
+  identity_pool_id = aws_cognito_identity_pool.user_identity_pool.id
+  roles = {
+    "authenticated" = aws_iam_role.user_role.arn
+  }
 }
 
 resource "aws_iam_role" "lambda_exec_role" {
@@ -243,4 +256,39 @@ output "cognito_user_pool_id" {
 output "cognito_user_pool_client_id" {
   description = "ID of the Cognito User Pool Client"
   value       = aws_cognito_user_pool_client.user_pool_client.id
+}
+
+output "user_role_arn" {
+  description = "User Role ARN"
+  value       = aws_iam_role.user_role.arn
+}
+
+output "cognito_identity_id" {
+  value = aws_cognito_identity_pool.user_identity_pool.id
+}
+
+# Data source to zip the notification processor Lambda code
+data "archive_file" "frontend_test_lambda_code" {
+  type        = "zip"
+  output_path = "${path.module}/test_lambda.zip"
+
+  source {
+    content  = <<EOF
+    def lambda_handler(event, context):
+      print("hello, world!")
+
+    EOF
+    filename = "index.py"
+  }
+}
+
+resource "aws_lambda_function" "sqs_notification_processor" {
+  function_name = "frontend-test"
+  runtime       = "python3.9"
+  handler       = "index.lambda_handler"
+  role          = aws_iam_role.lambda_exec_role.arn
+  timeout       = 30
+
+  filename         = data.archive_file.frontend_test_lambda_code.output_path
+  source_code_hash = data.archive_file.frontend_test_lambda_code.output_base64sha256
 }

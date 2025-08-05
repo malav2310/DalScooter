@@ -92,14 +92,14 @@ export default function FeedbackPage() {
           const jsonString = Buffer.from(out.Payload).toString('utf8')
           const parsedData = JSON.parse(jsonString)
           console.log(parsedData)
-          setFeedbackData(parsedData)
+          // setFeedbackData(parsedData)
         } else {
         // Using mock data as fallback
-          setFeedbackData(feedbackData)
+          // setFeedbackData(feedbackData)
         }
 
         // Using mock data as fallback
-        // setFeedbackData(feedbackData)
+        setFeedbackData(feedbackData)
       } catch (err) {
         setError('Failed to load feedback. Showing sample data.')
         setFeedbackData(feedbackData)

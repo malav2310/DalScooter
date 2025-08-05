@@ -17,7 +17,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CalendarIcon } from "lucide-react"
 import { format, differenceInDays } from "date-fns"
 import { Calendar } from "@/components/ui/calendar"
-import { v4 as uuidv4 } from "uuid" 
+import { v4 as uuidv4 } from "uuid" // For unique booking reference
 
 export default function DashboardPage() {
   // Booking System State
@@ -107,17 +107,8 @@ export default function DashboardPage() {
           <span className="text-lg font-semibold">Bike Rentals</span>
         </Link>
         <nav className="ml-auto flex gap-4 sm:gap-6">
-          <Link href="/sign-in" className="text-sm font-medium hover:underline underline-offset-4">
-            Sign In
-          </Link>
-          <Link href="/sign-up" className="text-sm font-medium hover:underline underline-offset-4">
-            Sign Up
-          </Link>
           <Link href="/feedback" className="text-sm font-medium hover:underline underline-offset-4">
             Feedback
-          </Link>
-          <Link href="/dashboard" className="text-sm font-medium hover:underline underline-offset-4">
-            Dashboard
           </Link>
           <Link href="#" className="text-sm font-medium hover:underline underline-offset-4">
             About
@@ -132,7 +123,7 @@ export default function DashboardPage() {
         <section className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-800 dark:to-blue-900 text-center">
           <div className="container px-4 md:px-6">
             <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl text-blue-900 dark:text-blue-100">
-              Welcome, Registered User!
+              Welcome User!
             </h1>
             <p className="mx-auto max-w-[700px] text-blue-700 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-blue-300 mt-4">
               Access your personalized features and manage your rentals.

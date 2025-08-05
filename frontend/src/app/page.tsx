@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import {
   Card,
@@ -18,11 +17,10 @@ import {
   Frown,
 } from "lucide-react";
 
-// This data can be moved to a separate file or fetched from an API
+// Bike types without images
 const bikeTypes = [
   {
     name: "Gyroscooter",
-    image: "/placeholder.svg?height=200&width=300",
     availability: "Available",
     tariff: "$25/hour",
     icon: <Scooter className="h-6 w-6" />,
@@ -30,7 +28,6 @@ const bikeTypes = [
   },
   {
     name: "eBikes",
-    image: "/placeholder.svg?height=200&width=300",
     availability: "Limited",
     tariff: "$50/day",
     icon: <Bike className="h-6 w-6" />,
@@ -38,7 +35,6 @@ const bikeTypes = [
   },
   {
     name: "Segway",
-    image: "/placeholder.svg?height=200&width=300",
     availability: "Out of Stock",
     tariff: "$35/hour",
     icon: <Waypoints className="h-6 w-6" />,
@@ -76,7 +72,6 @@ export default function HomePage() {
     <>
       <header className="w-full py-4 bg-white dark:bg-gray-800 shadow-md">
         <div className="container px-4 md:px-6 flex items-center justify-between">
-          
           <div className="flex gap-4">
             <Link href="/sign-in" className="text-sm font-medium hover:underline underline-offset-4">
               Sign In
@@ -112,13 +107,6 @@ export default function HomePage() {
                 key={index}
                 className="flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300"
               >
-                <Image
-                  src={bike.image || "/placeholder.svg"}
-                  width={400}
-                  height={250}
-                  alt={`${bike.name} image`}
-                  className="w-full h-48 object-cover"
-                />
                 <CardHeader className="flex flex-row items-center gap-3 pb-2">
                   {bike.icon}
                   <CardTitle className="text-2xl font-bold">

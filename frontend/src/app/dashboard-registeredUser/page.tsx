@@ -107,7 +107,7 @@ export default function DashboardPage() {
       <section className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-800 dark:to-blue-900 text-center">
         <div className="container px-4 md:px-6">
           <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl text-blue-900 dark:text-blue-100">
-            Welcome User!
+            Welcome Malav!
           </h1>
           <p className="mx-auto max-w-[700px] text-blue-700 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-blue-300 mt-4">
             Access your personalized features and manage your rentals.

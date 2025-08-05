@@ -11,7 +11,7 @@ export default function OperatorDashboardPage() {
       <header className="px-4 lg:px-6 h-14 flex items-center border-b">
         <Link href="/dashboard-operator" className="flex items-center justify-center gap-2">
           <Bike className="h-6 w-6" />
-          <span className="text-lg font-semibold">Bike Rentals</span>
+          
         </Link>
         <nav className="ml-auto flex gap-4 sm:gap-6">
           <Link href="/feedback" className="text-sm font-medium hover:underline underline-offset-4">

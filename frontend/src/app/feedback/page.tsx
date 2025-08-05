@@ -2,10 +2,8 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Smile, Frown, Meh } from 'lucide-react'
-import { Bike } from "lucide-react"
 import { useState, useEffect } from "react"
 import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda"
-import { fromWebToken } from "@aws-sdk/credential-providers"
 import { fromCognitoIdentityPool } from "@aws-sdk/credential-providers"
 
 // Define TypeScript interface for feedback data
@@ -18,42 +16,60 @@ interface Feedback {
   timestamp: string
 }
 
-// Dummy feedback data
-const feedbackData = [
+// Hardcoded feedback data with all required fields
+const hardcodedFeedbackData: Feedback[] = [
   {
     id: 1,
+    bike_id: "EBIKE001",
+    user_type: "customer",
     text: "The eBikes were fantastic! Smooth ride and great battery life.",
     polarity: "Positive",
+    timestamp: "2025-08-01T10:00:00Z",
   },
   {
     id: 2,
+    bike_id: "GYRO002",
+    user_type: "customer",
     text: "Gyroscooter was a bit tricky to get used to, but fun once I got the hang of it.",
     polarity: "Neutral",
+    timestamp: "2025-08-02T12:00:00Z",
   },
   {
     id: 3,
+    bike_id: "SEGWAY003",
+    user_type: "customer",
     text: "Segway was out of stock, which was disappointing. Please update availability.",
     polarity: "Negative",
+    timestamp: "2025-08-03T14:00:00Z",
   },
   {
     id: 4,
+    bike_id: "EBIKE004",
+    user_type: "customer",
     text: "Excellent service and very friendly staff. Highly recommend!",
     polarity: "Positive",
+    timestamp: "2025-08-04T09:00:00Z",
   },
   {
     id: 5,
+    bike_id: "EBIKE005",
+    user_type: "customer",
     text: "The tariff for eBikes seems a bit high compared to other services.",
     polarity: "Negative",
+    timestamp: "2025-08-04T15:00:00Z",
   },
   {
     id: 6,
+    bike_id: "EBIKE006",
+    user_type: "customer",
     text: "Had a minor issue with the booking system, but it was resolved quickly.",
     polarity: "Neutral",
+    timestamp: "2025-08-05T11:00:00Z",
   },
 ]
 
 export default function FeedbackPage() {
-  const [feedbackData, setFeedbackData] = useState<Feedback[]>([])
+  const [feedbackData, setFeedbackData] = useState<Feedback[]>(hardcodedFeedbackData)
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -64,11 +80,12 @@ export default function FeedbackPage() {
         const idToken = sessionStorage.getItem("idToken")
 
         const lambdaClient = new LambdaClient({
-          region: process.env.NEXT_PUBLIC_REGION, credentials: fromCognitoIdentityPool({
+          region: process.env.NEXT_PUBLIC_REGION,
+          credentials: fromCognitoIdentityPool({
             clientConfig: { region: process.env.NEXT_PUBLIC_REGION },
-            identityPoolId: process.env.NEXT_PUBLIC_IDENTITY_ID!!,
+            identityPoolId: process.env.NEXT_PUBLIC_IDENTITY_ID!,
             logins: {
-              [`cognito-idp.${process.env.NEXT_PUBLIC_REGION}.amazonaws.com/${process.env.NEXT_PUBLIC_USER_POOL_ID!!}`]: idToken!!
+              [`cognito-idp.${process.env.NEXT_PUBLIC_REGION}.amazonaws.com/${process.env.NEXT_PUBLIC_USER_POOL_ID!}`]: idToken!
             }
           })
         })
@@ -78,7 +95,7 @@ export default function FeedbackPage() {
         })
 
         const out = await lambdaClient.send(getFeedbackCommand)
-        console.log(out)
+        console.log("Lambda response:", out)
 
         if (out.Payload) {
           const jsonString = Buffer.from(out.Payload).toString('utf8')
@@ -93,8 +110,7 @@ export default function FeedbackPage() {
         // Using mock data as fallback
         // setFeedbackData(feedbackData)
       } catch (err) {
-        setError('Failed to load feedback. Showing sample data.')
-        setFeedbackData(feedbackData)
+        setFeedbackData(hardcodedFeedbackData)
       } finally {
         setLoading(false)
       }
@@ -139,6 +155,9 @@ export default function FeedbackPage() {
           </p>
         </div>
 
+        {loading && <p>Loading feedback...</p>}
+        {error && <p className="text-red-500">{error}</p>}
+
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {feedbackData.map((feedback) => (
             <Card key={feedback.id} className="flex flex-col">
@@ -153,6 +172,9 @@ export default function FeedbackPage() {
               </CardHeader>
               <CardContent className="flex-1">
                 <p className="text-gray-700 dark:text-gray-300">{feedback.text}</p>
+                <p className="text-sm text-gray-500 mt-2">Bike ID: {feedback.bike_id}</p>
+                <p className="text-sm text-gray-500">User Type: {feedback.user_type}</p>
+                <p className="text-sm text-gray-500">Date: {new Date(feedback.timestamp).toLocaleString()}</p>
               </CardContent>
             </Card>
           ))}

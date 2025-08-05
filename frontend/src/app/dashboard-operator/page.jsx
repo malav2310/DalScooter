@@ -13,17 +13,8 @@ export default function OperatorDashboardPage() {
           <span className="text-lg font-semibold">Bike Rentals</span>
         </Link>
         <nav className="ml-auto flex gap-4 sm:gap-6">
-          <Link href="/sign-in" className="text-sm font-medium hover:underline underline-offset-4">
-            Sign In
-          </Link>
-          <Link href="/sign-up" className="text-sm font-medium hover:underline underline-offset-4">
-            Sign Up
-          </Link>
-          <Link href="/dashboard" className="text-sm font-medium hover:underline underline-offset-4">
-            User Dashboard
-          </Link>
-          <Link href="/operator-dashboard" className="text-sm font-medium hover:underline underline-offset-4">
-            Operator Dashboard
+          <Link href="/feedback" className="text-sm font-medium hover:underline underline-offset-4">
+            Feedback
           </Link>
           <Link href="#" className="text-sm font-medium hover:underline underline-offset-4">
             About
@@ -38,7 +29,7 @@ export default function OperatorDashboardPage() {
         <section className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-800 dark:to-purple-900 text-center">
           <div className="container px-4 md:px-6">
             <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl text-purple-900 dark:text-purple-100">
-              Franchise Operator Dashboard
+              Admin Dashboard
             </h1>
             <p className="mx-auto max-w-[700px] text-purple-700 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-purple-300 mt-4">
               Manage bikes, communicate with customers, and oversee operations.
@@ -49,6 +40,11 @@ export default function OperatorDashboardPage() {
         <BikeManagement />
         <IssueTicketManagement />
 
+        {/* Guest Features for Operators */}
+        <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-center mt-12 mb-8">
+          General Information
+        </h2>
+        <BikeList />
       </main>
 
       <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t">

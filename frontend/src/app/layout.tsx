@@ -40,14 +40,11 @@ export default function RootLayout({
               <span className="text-lg font-semibold">Bike Rentals</span>
             </Link>
             <nav className="ml-auto flex gap-4 sm:gap-6">
-              {/* <Link href="/sign-in" className="text-sm font-medium hover:underline underline-offset-4">
-                Sign In
+              <Link href="/sign-in" className="text-sm font-medium hover:underline underline-offset-4">
+                Contact us
               </Link>
               <Link href="/sign-up" className="text-sm font-medium hover:underline underline-offset-4">
-                Sign Up
-              </Link> */}
-              <Link href="/feedback" className="text-sm font-medium hover:underline underline-offset-4">
-                Feedback
+                About
               </Link>
             </nav>
           </header>

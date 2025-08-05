@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -73,6 +74,20 @@ const getPolarityInfo = (polarity: string) => {
 export default function HomePage() {
   return (
     <>
+      <header className="w-full py-4 bg-white dark:bg-gray-800 shadow-md">
+        <div className="container px-4 md:px-6 flex items-center justify-between">
+          
+          <div className="flex gap-4">
+            <Link href="/sign-in" className="text-sm font-medium hover:underline underline-offset-4">
+              Sign In
+            </Link>
+            <Link href="/sign-up" className="text-sm font-medium hover:underline underline-offset-4">
+              Sign Up
+            </Link>
+          </div>
+        </div>
+      </header>
+
       <section className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900">
         <div className="container px-4 md:px-6 text-center">
           <div className="space-y-4">

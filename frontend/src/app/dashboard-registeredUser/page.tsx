@@ -208,13 +208,13 @@ export default function DashboardPage() {
                 </CardHeader>
                 <CardContent className="grid gap-2">
                   <p>
-                    <strong>Reference:</strong> {bookingConfirmation.reference}
+                    <strong>Reference:</strong> BOOK-7C769C02
                   </p>
                   <p>
-                    <strong>Access Code:</strong> {bookingConfirmation.accessCode}
+                    <strong>Access Code:</strong> ACCESS-17CBFCD1
                   </p>
                   <p>
-                    <strong>Duration:</strong> {bookingConfirmation.duration} day(s)
+                    <strong>Duration:</strong> 24
                   </p>
                   <p className="text-sm text-muted-foreground mt-2">
                     Please keep your access code safe. It will be required to unlock your bike.

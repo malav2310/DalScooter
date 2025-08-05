@@ -44,9 +44,6 @@ const initialBikes: Bike[] = [
   },
 ]
 
-// Mock API Gateway URL for bike management
-const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || "https://mockapi.example.com/operator"
-
 export function BikeManagement() {
   const [bikes, setBikes] = useState<Bike[]>(initialBikes)
   const [form, setForm] = useState<Omit<Bike, "id">>({
@@ -58,7 +55,6 @@ export function BikeManagement() {
   })
   const [editingBikeId, setEditingBikeId] = useState<string | null>(null)
   const [message, setMessage] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -69,43 +65,21 @@ export function BikeManagement() {
     setForm((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleAddUpdateBike = async (e: React.FormEvent) => {
+  const handleAddUpdateBike = (e: React.FormEvent) => {
     e.preventDefault()
-    setIsLoading(true)
     setMessage("")
 
-    const endpoint = editingBikeId ? `${API_GATEWAY_URL}/bikes/update/${editingBikeId}` : `${API_GATEWAY_URL}/bikes/add`
-    const method = editingBikeId ? "PUT" : "POST"
-
-    try {
-      const response = await fetch(endpoint, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      })
-      const data = await response.json()
-      console.log(`${method} bike response:`, data)
-
-      if (!response.ok) {
-        throw new Error(data.message || `Failed to ${editingBikeId ? "update" : "add"} bike.`)
-      }
-
-      if (editingBikeId) {
-        setBikes((prev) => prev.map((bike) => (bike.id === editingBikeId ? { ...form, id: editingBikeId } : bike)))
-        setMessage("Bike updated successfully!")
-      } else {
-        const newBike: Bike = { ...form, id: `bike-${Date.now()}` } // Mock ID
-        setBikes((prev) => [...prev, newBike])
-        setMessage("Bike added successfully!")
-      }
-
-      setForm({ type: "eBike", accessCode: "", features: "", hourlyRate: 0, discountCode: "" })
-      setEditingBikeId(null)
-    } catch (error: any) {
-      setMessage(error.message || "An error occurred.")
-    } finally {
-      setIsLoading(false)
+    if (editingBikeId) {
+      setBikes((prev) => prev.map((bike) => (bike.id === editingBikeId ? { ...form, id: editingBikeId } : bike)))
+      setMessage("Bike updated successfully!")
+    } else {
+      const newBike: Bike = { ...form, id: `bike-${Date.now()}` }
+      setBikes((prev) => [...prev, newBike])
+      setMessage("Bike added successfully!")
     }
+
+    setForm({ type: "eBike", accessCode: "", features: "", hourlyRate: 0, discountCode: "" })
+    setEditingBikeId(null)
   }
 
   const startEditing = (bike: Bike) => {
@@ -140,7 +114,6 @@ export function BikeManagement() {
                     value={form.type}
                     onValueChange={(value) => handleSelectChange("type", value as Bike["type"])}
                     required
-                    disabled={isLoading}
                   >
                     <SelectTrigger id="type">
                       <SelectValue placeholder="Select a vehicle type" />
@@ -161,7 +134,6 @@ export function BikeManagement() {
                     onChange={handleChange}
                     placeholder="e.g., EBK123"
                     required
-                    disabled={isLoading}
                   />
                 </div>
                 <div className="grid gap-2">
@@ -172,7 +144,6 @@ export function BikeManagement() {
                     value={form.features}
                     onChange={handleChange}
                     placeholder="e.g., GPS tracking, higher battery life"
-                    disabled={isLoading}
                   />
                 </div>
                 <div className="grid gap-2">
@@ -187,7 +158,6 @@ export function BikeManagement() {
                     required
                     min="0"
                     step="0.01"
-                    disabled={isLoading}
                   />
                 </div>
                 <div className="grid gap-2">
@@ -198,14 +168,13 @@ export function BikeManagement() {
                     value={form.discountCode}
                     onChange={handleChange}
                     placeholder="e.g., SUMMER20"
-                    disabled={isLoading}
                   />
                 </div>
-                <Button type="submit" disabled={isLoading}>
-                  {isLoading ? "Processing..." : editingBikeId ? "Update Bike" : "Add Bike"}
+                <Button type="submit">
+                  {editingBikeId ? "Update Bike" : "Add Bike"}
                 </Button>
                 {editingBikeId && (
-                  <Button type="button" variant="outline" onClick={cancelEditing} disabled={isLoading}>
+                  <Button type="button" variant="outline" onClick={cancelEditing}>
                     Cancel
                   </Button>
                 )}

@@ -144,7 +144,7 @@ export default function SignInPage() {
 
         sessionStorage.setItem("idToken", out.AuthenticationResult.IdToken)
 
-        router.push("/feedback") // Change to your desired post-sign-in page
+        router.push("/dashboard-registeredUser") // Change to your desired post-sign-in page
       } else if (out.ChallengeName) {
         setCurrentChallenge({
           ChallengeName: out.ChallengeName,

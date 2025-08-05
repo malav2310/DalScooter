@@ -50,89 +50,42 @@ const initialIssueTickets: IssueTicket[] = [
   },
 ]
 
-// Mock API Gateway URL for issue tickets
-const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || "https://mockapi.example.com/operator"
-
 export function IssueTicketManagement() {
   const [tickets, setTickets] = useState<IssueTicket[]>(initialIssueTickets)
   const [currentResponse, setCurrentResponse] = useState<{ [key: string]: string }>({})
   const [message, setMessage] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
 
   const handleResponseChange = (ticketId: string, value: string) => {
     setCurrentResponse((prev) => ({ ...prev, [ticketId]: value }))
   }
 
-  const handleSendResponse = async (ticketId: string) => {
+  const handleSendResponse = (ticketId: string) => {
     const responseText = currentResponse[ticketId]?.trim()
     if (!responseText) {
-      alert("Response cannot be empty.")
+      setMessage("Response cannot be empty.")
       return
     }
 
-    setIsLoading(true)
-    setMessage("")
-
-    try {
-      // Simulate API Gateway call to respond to an issue ticket
-      const response = await fetch(`${API_GATEWAY_URL}/issues/respond/${ticketId}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ operatorResponse: responseText }),
-      })
-      const data = await response.json()
-      console.log(`Respond to ticket ${ticketId} response:`, data)
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to send response.")
-      }
-
-      setTickets((prev) =>
-        prev.map((ticket) =>
-          ticket.id === ticketId
-            ? { ...ticket, operatorResponse: responseText, status: "Pending Response" }
-            : ticket,
-        ),
-      )
-      setCurrentResponse((prev) => {
-        const newState = { ...prev }
-        delete newState[ticketId]
-        return newState
-      })
-      setMessage("Response sent successfully!")
-    } catch (error: any) {
-      setMessage(error.message || "An error occurred while sending response.")
-    } finally {
-      setIsLoading(false)
-    }
+    setTickets((prev) =>
+      prev.map((ticket) =>
+        ticket.id === ticketId
+          ? { ...ticket, operatorResponse: responseText, status: "Pending Response" }
+          : ticket,
+      ),
+    )
+    setCurrentResponse((prev) => {
+      const newState = { ...prev }
+      delete newState[ticketId]
+      return newState
+    })
+    setMessage("Response sent successfully!")
   }
 
-  const handleMarkAsResolved = async (ticketId: string) => {
-    setIsLoading(true)
-    setMessage("")
-
-    try {
-      // Simulate API Gateway call to mark ticket as resolved
-      const response = await fetch(`${API_GATEWAY_URL}/issues/resolve/${ticketId}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      })
-      const data = await response.json()
-      console.log(`Resolve ticket ${ticketId} response:`, data)
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to mark ticket as resolved.")
-      }
-
-      setTickets((prev) =>
-        prev.map((ticket) => (ticket.id === ticketId ? { ...ticket, status: "Resolved" } : ticket)),
-      )
-      setMessage("Ticket marked as resolved!")
-    } catch (error: any) {
-      setMessage(error.message || "An error occurred while resolving ticket.")
-    } finally {
-      setIsLoading(false)
-    }
+  const handleMarkAsResolved = (ticketId: string) => {
+    setTickets((prev) =>
+      prev.map((ticket) => (ticket.id === ticketId ? { ...ticket, status: "Resolved" } : ticket)),
+    )
+    setMessage("Ticket marked as resolved!")
   }
 
   return (
@@ -186,12 +139,11 @@ export function IssueTicketManagement() {
                         value={currentResponse[ticket.id] || ""}
                         onChange={(e) => handleResponseChange(ticket.id, e.target.value)}
                         rows={3}
-                        disabled={isLoading}
                       />
                       <div className="flex gap-2">
                         <Button
                           onClick={() => handleSendResponse(ticket.id)}
-                          disabled={isLoading || !currentResponse[ticket.id]?.trim()}
+                          disabled={!currentResponse[ticket.id]?.trim()}
                           className="flex-1"
                         >
                           Send Response
@@ -199,7 +151,6 @@ export function IssueTicketManagement() {
                         <Button
                           variant="outline"
                           onClick={() => handleMarkAsResolved(ticket.id)}
-                          disabled={isLoading}
                           className="flex-1"
                         >
                           Mark as Resolved
@@ -213,7 +164,7 @@ export function IssueTicketManagement() {
           )}
         </div>
         {message && (
-          <p className={`text-center mt-4 text-sm ${message.includes("successfully") ? "text-green-600" : "text-red-600"}`}>
+          <p className={`text-center mt-4 text-sm ${message.includes("successfully") || message.includes("resolved") ? "text-green-600" : "text-red-600"}`}>
             {message}
           </p>
         )}

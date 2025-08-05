@@ -42,8 +42,8 @@ export default function Chatbot() {
     setIsLoading(true);
 
     //API gateway url
-    // const API_GATEWAY_URL = 'https://4ytlxa6boe.execute-api.us-east-1.amazonaws.com/dev/chat';
-    const API_GATEWAY_URL = process.env.NODE_PUBLIC_CHATBOT_API_GATEWAY_URL!!
+    // const API_GATEWAY_URL = '';
+    const API_GATEWAY_URL = "https://uxx768awoj.execute-api.us-east-1.amazonaws.com/dev/chat"
 
     try {
       console.log('Sending request to:', API_GATEWAY_URL);

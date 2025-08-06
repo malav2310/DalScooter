@@ -34,6 +34,12 @@ data "archive_file" "pre_sign_up_lambda" {
   output_path = "./lambda_zip_archives/pre_sign_up_lambda.zip"
 }
 
+data "archive_file" "post_confirmation_lambda" {
+  type        = "zip"
+  source_file = "./cognito/functions/post_confirmation_lambda.py"
+  output_path = "./lambda_zip_archives/post_confirmation_lambda.zip"
+}
+
 data "aws_iam_policy_document" "cognito_lambda_assume_role" {
   statement {
     effect = "Allow"
@@ -63,7 +69,8 @@ data "aws_iam_policy_document" "cognito_lambda_policies" {
       "cognito-idp:DescribeUserPool",
       "cognito-idp:UpdateUserPool",
       "cognito-idp:AdminCreateUser",
-      "cognito-idp:AdminInitiateAuth"
+      "cognito-idp:AdminInitiateAuth",
+      "cognito-idp:AdminAddUserToGroup"
     ]
     resources = ["*"]
   }
@@ -101,6 +108,17 @@ data "aws_iam_policy_document" "user_role_permissions" {
     # Fill the rest with the permissions to be used with this role
     actions = ["lambda:InvokeFunction"]
     resources = [
+      # var.get_feedback_lambda,
+      var.submit_feedback_lambda
+    ]
+  }
+}
+
+data "aws_iam_policy_document" "admin_role_permissions" {
+  statement {
+    effect  = "Allow"
+    actions = ["lambda:InvokeFunction"]
+    resources = [
       var.get_feedback_lambda,
       var.submit_feedback_lambda
     ]
@@ -115,6 +133,7 @@ resource "aws_cognito_user_pool" "cognito_user_pool" {
     create_auth_challenge          = aws_lambda_function.create_auth_lambda.arn
     verify_auth_challenge_response = aws_lambda_function.verify_auth_lambda.arn
     pre_sign_up                    = aws_lambda_function.pre_sign_up_lambda.arn
+    post_confirmation              = aws_lambda_function.post_confirmation_lambda.arn
   }
 }
 
@@ -162,11 +181,65 @@ resource "aws_iam_role_policy_attachment" "user_role_policy_attachment" {
   policy_arn = aws_iam_policy.user_role_policy.arn
 }
 
-resource "aws_cognito_identity_pool_roles_attachment" "user_role_identity_pool_attachment" {
+# resource "aws_cognito_identity_pool_roles_attachment" "user_role_identity_pool_attachment" {
+#   identity_pool_id = aws_cognito_identity_pool.user_identity_pool.id
+#   roles = {
+#     "authenticated" = aws_iam_role.user_role.arn
+#   }
+# }
+
+resource "aws_iam_role" "admin_role" {
+  name               = "AdminRole"
+  assume_role_policy = data.aws_iam_policy_document.cognito_user_assume_document.json
+}
+
+resource "aws_iam_policy" "admin_role_policy" {
+  name   = "AdminRolePolicy"
+  policy = data.aws_iam_policy_document.admin_role_permissions.json
+}
+
+resource "aws_iam_role_policy_attachment" "admin_role_policy_attachment" {
+  role       = aws_iam_role.admin_role.name
+  policy_arn = aws_iam_policy.admin_role_policy.arn
+}
+
+resource "aws_cognito_identity_pool_roles_attachment" "admin_role_identity_pool_attachment" {
   identity_pool_id = aws_cognito_identity_pool.user_identity_pool.id
   roles = {
-    "authenticated" = aws_iam_role.user_role.arn
+    "unauthenticated" = aws_iam_role.user_role.arn
+    "authenticated"   = aws_iam_role.admin_role.arn
   }
+  role_mapping {
+    type                      = "Rules"
+    identity_provider         = "cognito-idp.${var.aws_region}.amazonaws.com/${aws_cognito_user_pool.cognito_user_pool.id}:${aws_cognito_user_pool_client.user_pool_client.id}"
+    ambiguous_role_resolution = "Deny"
+    mapping_rule {
+      claim      = "cognito:groups"
+      match_type = "Equals"
+      role_arn   = aws_iam_role.user_role.arn
+      value      = "[\"Users\"]"
+    }
+    mapping_rule {
+      claim      = "cognito:groups"
+      match_type = "Equals"
+      role_arn   = aws_iam_role.admin_role.arn
+      value      = "[\"Administrators\"]"
+    }
+  }
+}
+
+resource "aws_cognito_user_group" "users_group" {
+  name         = "Users"
+  precedence   = 1
+  user_pool_id = aws_cognito_user_pool.cognito_user_pool.id
+  role_arn     = aws_iam_role.user_role.arn
+}
+
+resource "aws_cognito_user_group" "admin_group" {
+  name         = "Administrators"
+  precedence   = 1
+  user_pool_id = aws_cognito_user_pool.cognito_user_pool.id
+  role_arn     = aws_iam_role.admin_role.arn
 }
 
 resource "aws_iam_role" "lambda_exec_role" {
@@ -248,6 +321,22 @@ resource "aws_lambda_function" "pre_sign_up_lambda" {
   runtime          = "python3.11"
 }
 
+resource "aws_lambda_permission" "post_confirmation_permission" {
+  function_name = aws_lambda_function.post_confirmation_lambda.arn
+  action        = "lambda:InvokeFunction"
+  principal     = "cognito-idp.amazonaws.com"
+  source_arn    = aws_cognito_user_pool.cognito_user_pool.arn
+}
+
+resource "aws_lambda_function" "post_confirmation_lambda" {
+  function_name    = "PostConfirmation"
+  role             = aws_iam_role.lambda_exec_role.arn
+  handler          = "post_confirmation_lambda.lambda_handler"
+  filename         = data.archive_file.post_confirmation_lambda.output_path
+  source_code_hash = data.archive_file.post_confirmation_lambda.output_base64sha256
+  runtime          = "python3.11"
+}
+
 output "cognito_user_pool_id" {
   description = "ID of the Cognito User Pool"
   value       = aws_cognito_user_pool.cognito_user_pool.id
@@ -261,6 +350,11 @@ output "cognito_user_pool_client_id" {
 output "user_role_arn" {
   description = "User Role ARN"
   value       = aws_iam_role.user_role.arn
+}
+
+output "admin_role_arn" {
+  description = "Admin Role ARN"
+  value       = aws_iam_role.admin_role.arn
 }
 
 output "cognito_identity_id" {

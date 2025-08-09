@@ -6,13 +6,13 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Input } from "@/components/ui/input"
 import { MessageSquare, X, Send } from "lucide-react"
 
-// Defineing the structure for a chat message
+// Define the structure for a chat message
 interface ChatMessage {
   sender: 'user' | 'bot' | 'error';
   text: string;
 }
 
-// Chatbot component
+// The Chatbot component
 export default function Chatbot() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -20,12 +20,12 @@ export default function Chatbot() {
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  // session ID
+  // More robust session ID generator
   const [sessionId] = useState(`react-session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
 
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll effect
+  // Auto-scroll to the latest message
   useEffect(() => {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
@@ -41,9 +41,14 @@ export default function Chatbot() {
     setInputValue('');
     setIsLoading(true);
 
+<<<<<<< HEAD
     //API gateway url
     // const API_GATEWAY_URL = '';
     const API_GATEWAY_URL = "https://uxx768awoj.execute-api.us-east-1.amazonaws.com/dev/chat"
+=======
+    // 🚨 REPLACE THIS WITH YOUR ACTUAL API GATEWAY URL FROM: terraform output api_gateway_url
+    const API_GATEWAY_URL = 'https://uxx768awoj.execute-api.us-east-1.amazonaws.com/dev/chat';
+>>>>>>> 6854761 (Update: Integrated virtual assiatant with Bike managment module and Message passing module, chatbot now can acess booking information directly and pass down concerns)
 
     try {
       console.log('Sending request to:', API_GATEWAY_URL);
@@ -55,7 +60,7 @@ export default function Chatbot() {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
-        mode: 'cors', //set CORS mode
+        mode: 'cors', // Explicitly set CORS mode
         body: JSON.stringify({
           message: originalMessage,
           sessionId: sessionId
@@ -85,7 +90,7 @@ export default function Chatbot() {
       
       let errorMessage = "Sorry, I'm having trouble connecting. Please try again later.";
       
-      // Providing more specific error messages for better debugging
+      // Provide more specific error messages
       if (error instanceof Error) {
         if (error.message.includes('Failed to fetch')) {
           errorMessage = "Connection failed. This might be a CORS issue or network problem. Check the console for details.";
@@ -108,10 +113,10 @@ export default function Chatbot() {
     }
   };
 
-  // quick test function for debugging
+  // Quick test function for debugging
   const sendTestMessage = (message: string) => {
     setInputValue(message);
-    // qmall delay to ensure state is updated
+    // Small delay to ensure state is updated
     setTimeout(() => handleSendMessage(), 100);
   };
 
